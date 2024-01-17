@@ -64,7 +64,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.3</version>
                     <configuration>
-                        <argLine>--enable-native-access=ALL-UNNAMED --enable-preview</argLine>
+                        <argLine>--enable-native-access=com.ustermetrics.ecos4j --enable-preview</argLine>
                     </configuration>
                 </plugin>
             </plugins>
