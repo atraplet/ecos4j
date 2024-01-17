@@ -14,7 +14,7 @@ loads the native solver using the `java.library.path` in order to locate the nat
 
 ecos4j has been tested on Windows 10 and Ubuntu 22.04 (WSL2) using the Zulu build of OpenJDK 21 and ECOS version
 v2.0.10. Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
-use `--enable-native-access=ALL-UNNAMED` to allow classpath based code to invoke the native code.
+use `--enable-native-access=com.ustermetrics.ecos4j` to allow classpath based code to invoke the native code.
 
 ## Java bindings
 
