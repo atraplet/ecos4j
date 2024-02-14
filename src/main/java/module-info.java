@@ -1,5 +1,5 @@
 module com.ustermetrics.ecos4j {
-    requires lombok;
+    requires static lombok;
     requires com.google.common;
 
     exports com.ustermetrics.ecos4j;
