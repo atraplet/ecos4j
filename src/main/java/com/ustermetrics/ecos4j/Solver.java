@@ -105,7 +105,7 @@ public class Solver {
         }
 
         static Status valueOf(int status) {
-            for (var c : values()) {
+            for (val c : values()) {
                 if (c.status() == status) {
                     return c;
                 }
