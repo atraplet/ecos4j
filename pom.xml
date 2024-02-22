@@ -15,7 +15,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <git.repository>atraplet/ecos4j</git.repository>
+        <git.repository>atraplet/${project.artifactId}</git.repository>
         <gpg.keyname>0x79F58594</gpg.keyname>
     </properties>
 
