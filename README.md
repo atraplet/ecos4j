@@ -1,6 +1,6 @@
 # ECOS Solver for Java
 
-![ci workflow](https://github.com/atraplet/ecos4j/actions/workflows/ci.yml/badge.svg)
+![build workflow](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)
 
 *This library is currently an experimental library requiring JDK 21 and is work in progress. It depends
 on [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API which is in preview.*
