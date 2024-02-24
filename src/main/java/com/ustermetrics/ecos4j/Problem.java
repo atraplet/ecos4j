@@ -30,8 +30,8 @@ import static java.lang.foreign.MemorySegment.NULL;
  * where x are the primal variables, s are slack variables, c, G, h, A, and b are the problem data, and K is the
  * convex cone. The cone K is the Cartesian product of the positive orthant cone, the second order cone, and the
  * exponential cone.
- *
- * @implNote In order to control the lifecycle of native memory, {@link Problem} implements the {@link AutoCloseable}
+ * <p>
+ * In order to control the lifecycle of native memory, {@link Problem} implements the {@link AutoCloseable}
  * interface and should be used with the <i>try-with-resources</i> statement.
  */
 public class Problem implements AutoCloseable {
