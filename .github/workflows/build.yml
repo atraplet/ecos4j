@@ -8,6 +8,7 @@ on:
 
 env:
   ECOS_VERSION: v2.0.10
+  JAVA_VERSION: 21
 
 jobs:
   build:
@@ -17,7 +18,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: $JAVA_VERSION
           distribution: 'temurin'
           cache: maven
       - name: Cache ECOS shared library
