@@ -57,5 +57,3 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
       - name: Create Release
         uses: ncipollo/release-action@v1
-        with:
-          name: ${{ github.ref }}
