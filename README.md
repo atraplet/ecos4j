@@ -1,6 +1,6 @@
 # ECOS Solver for Java
 
-![ci workflow](https://github.com/atraplet/ecos4j/actions/workflows/ci.yml/badge.svg)
+![build workflow](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)
 
 *This library is currently an experimental library requiring JDK 21 and is work in progress. It depends
 on [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API which is in preview.*
@@ -26,3 +26,18 @@ from native library headers.
 
 The bindings are generated in two steps: First, `./bindings/generate_includes.sh` generates the dumps of the included
 symbols in the `includes.txt` file. Second, `./bindings/generate_bindings.sh` generates the actual Java bindings.
+
+## Release
+
+Update the version in the `pom.xml`, create a tag, and push it by running
+
+```
+export VERSION=X.Y.Z
+git checkout --detach HEAD
+sed -i -E "s/<version>[0-9]+\-SNAPSHOT<\/version>/<version>$VERSION<\/version>/g" pom.xml
+git commit -p -m "v$VERSION" pom.xml
+git tag v$VERSION
+git push origin v$VERSION
+```
+
+This will trigger the upload of the package to Maven Central via GitHub Actions.
