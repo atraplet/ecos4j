@@ -53,9 +53,10 @@ Update the version in the `pom.xml`, create a tag, and push it by running
 
 ```
 export VERSION=X.Y.Z
+vi RELEASE.md
 git checkout --detach HEAD
 sed -i -E "s/<version>[0-9]+\-SNAPSHOT<\/version>/<version>$VERSION<\/version>/g" pom.xml
-vi RELEASE.md
+git add RELEASE.md
 git commit -p -m "v$VERSION" pom.xml RELEASE.md
 git tag v$VERSION
 git push origin v$VERSION
