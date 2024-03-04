@@ -5,6 +5,7 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_call:
 
 env:
   ECOS_VERSION: v2.0.10
