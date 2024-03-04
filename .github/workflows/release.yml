@@ -5,45 +5,23 @@ on:
     tags:
       - 'v*'
 
-env:
-  ECOS_VERSION: v2.0.10
-
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-      - name: Cache ECOS shared library
-        id: cache-ecos
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-ecos
-        with:
-          path: ./libecos.so
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.ECOS_VERSION }}
-      - if: ${{ steps.cache-ecos.outputs.cache-hit != 'true' }}
-        name: Download ECOS shared library
-        run: curl -L -O https://github.com/atraplet/ecos/releases/download/$ECOS_VERSION/libecos.so
-      - name: Build with Maven
-        env:
-          LD_LIBRARY_PATH: ./
-        run: mvn -B clean package --file pom.xml
+    uses: atraplet/ecos4j/.github/workflows/build.yml@master
 
   release:
     runs-on: ubuntu-latest
     needs: [ build ]
     steps:
       - uses: actions/checkout@v3
+      - name: Get JDK version from Maven project
+        run: |
+          JDK_VERSION=$(mvn help:evaluate -Dexpression=maven.compiler.source -q -DforceStdout)
+          echo "JDK_VERSION=$JDK_VERSION" >> $GITHUB_ENV
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: ${{ env.JDK_VERSION }}
           distribution: 'temurin'
           server-id: ossrh
           server-username: MAVEN_USERNAME
