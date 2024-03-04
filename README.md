@@ -9,14 +9,34 @@ ecos4j (ECOS Solver for Java) is a Java library that provides an interface from 
 native open source mathematical programming solver [ECOS](https://github.com/embotech/ecos). It invokes the solver
 through [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API.
 
-The native solver must be installed on the machine. ecos4j doesn't ship any native implementation. ecos4j dynamically
-loads the native solver using the `java.library.path` in order to locate the native library.
+## Usage
 
-ecos4j has been tested on Windows 10 and Ubuntu 22.04 (WSL2) using the Eclipse Temurin build of OpenJDK 21 and ECOS
-version v2.0.10. Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
+### Dependency
+
+Search [Maven central](https://central.sonatype.com/artifact/com.ustermetrics/ecos4j) for the latest version and add a
+dependency to your `pom.xml`
+
+```
+<dependency>
+    <groupId>com.ustermetrics</groupId>
+    <artifactId>ecos4j</artifactId>
+    <version>x.y.z</version>
+</dependency>
+```
+
+### Native Library
+
+The native solver must be installed on the machine. ecos4j dynamically loads the native solver using
+the `java.library.path` in order to locate the native library.
+
+### Run Code
+
+Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
 use `--enable-native-access=com.ustermetrics.ecos4j` to allow classpath based code to invoke the native code.
 
-## Java bindings
+## Build
+
+### Java bindings
 
 The directory `./bindings` contains the files and scripts needed to generate the Java bindings. The actual bindings are
 under `./src/main/java` in the package `com.ustermetrics.ecos4j.bindings`.
@@ -33,9 +53,11 @@ Update the version in the `pom.xml`, create a tag, and push it by running
 
 ```
 export VERSION=X.Y.Z
+vi RELEASE.md
 git checkout --detach HEAD
 sed -i -E "s/<version>[0-9]+\-SNAPSHOT<\/version>/<version>$VERSION<\/version>/g" pom.xml
-git commit -p -m "v$VERSION" pom.xml
+git add RELEASE.md
+git commit -p -m "v$VERSION" pom.xml RELEASE.md
 git tag v$VERSION
 git push origin v$VERSION
 ```
