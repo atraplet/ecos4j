@@ -14,7 +14,7 @@ through [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign 
 ### Dependency
 
 Search [Maven central](https://central.sonatype.com/artifact/com.ustermetrics/ecos4j) for the latest version and add a
-dependency to your pom.xml
+dependency to your `pom.xml`
 
 ```
 <dependency>
