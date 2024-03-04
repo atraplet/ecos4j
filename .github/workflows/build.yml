@@ -14,10 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Get JDK version from Maven project
+        run: |
+          JDK_VERSION=$(mvn help:evaluate -Dexpression=maven.compiler.source -q -DforceStdout)
+          echo "JDK_VERSION=$JDK_VERSION" >> $GITHUB_ENV
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: ${{ env.JDK_VERSION }}
           distribution: 'temurin'
           cache: maven
       - name: Cache ECOS shared library
