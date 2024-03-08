@@ -32,7 +32,8 @@ the `java.library.path` in order to locate the native library.
 ### Run Code
 
 Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
-use `--enable-native-access=com.ustermetrics.ecos4j` to allow classpath based code to invoke the native code.
+use `--enable-native-access=com.ustermetrics.ecos4j` or `--enable-native-access=ALL-UNNAMED` (if you are not using Java
+Platform Module System) to allow classpath based code to invoke the native code.
 
 ## Build
 
