@@ -39,4 +39,4 @@ jobs:
       - name: Build with Maven
         env:
           LD_LIBRARY_PATH: ./
-        run: mvn -B clean package --file pom.xml
+        run: mvn -B clean verify -P coverage --file pom.xml
