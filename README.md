@@ -1,6 +1,8 @@
 # ECOS Solver for Java
 
-![build workflow](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)
+[![Build](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)](https://github.com/atraplet/ecos4j/actions/workflows/build.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/com.ustermetrics/ecos4j)](https://mvnrepository.com/artifact/com.ustermetrics/ecos4j)
+[![GNU GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue)](https://github.com/atraplet/ecos4j/blob/master/LICENSE)
 
 *This library is currently an experimental library requiring JDK 21 and is work in progress. It depends
 on [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API which is in preview.*
@@ -13,8 +15,8 @@ through [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign 
 
 ### Dependency
 
-Search [Maven central](https://central.sonatype.com/artifact/com.ustermetrics/ecos4j) for the latest version and add a
-dependency to your `pom.xml`
+Add the latest version from [Maven central](https://mvnrepository.com/artifact/com.ustermetrics/ecos4j) to
+your `pom.xml`
 
 ```
 <dependency>
@@ -32,7 +34,8 @@ the `java.library.path` in order to locate the native library.
 ### Run Code
 
 Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
-use `--enable-native-access=com.ustermetrics.ecos4j` to allow classpath based code to invoke the native code.
+use `--enable-native-access=com.ustermetrics.ecos4j` or `--enable-native-access=ALL-UNNAMED` (if you are not using Java
+Platform Module System) to allow classpath based code to invoke the native code.
 
 ## Build
 
