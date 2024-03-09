@@ -1,6 +1,7 @@
 # ECOS Solver for Java
 
 [![Build](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)](https://github.com/atraplet/ecos4j/actions/workflows/build.yml)
+[![codecov](https://codecov.io/github/atraplet/ecos4j/graph/badge.svg?token=S8TXRQ4UAZ)](https://codecov.io/github/atraplet/ecos4j)
 [![Maven Central](https://img.shields.io/maven-central/v/com.ustermetrics/ecos4j)](https://mvnrepository.com/artifact/com.ustermetrics/ecos4j)
 [![GNU GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue)](https://github.com/atraplet/ecos4j/blob/master/LICENSE)
 
