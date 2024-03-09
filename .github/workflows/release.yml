@@ -10,7 +10,7 @@ jobs:
     uses: atraplet/ecos4j/.github/workflows/build.yml@master
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [ build ]
     steps:
       - uses: actions/checkout@v3
