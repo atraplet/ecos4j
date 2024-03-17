@@ -7,9 +7,6 @@ on:
     branches: [ "master" ]
   workflow_call:
 
-env:
-  ECOS_VERSION: v2.0.10
-
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -25,17 +22,6 @@ jobs:
           java-version: ${{ env.JDK_VERSION }}
           distribution: 'temurin'
           cache: maven
-      - name: Cache ECOS shared library
-        id: cache-ecos
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-ecos
-        with:
-          path: ./libecos.so
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.ECOS_VERSION }}
-      - if: ${{ steps.cache-ecos.outputs.cache-hit != 'true' }}
-        name: Download ECOS shared library
-        run: curl -L -O https://github.com/atraplet/ecos/releases/download/$ECOS_VERSION/libecos.so
       - name: Build with Maven
         env:
           LD_LIBRARY_PATH: ./
