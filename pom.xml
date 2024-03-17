@@ -15,13 +15,13 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <git.repository>atraplet/${project.artifactId}</git.repository>
+        <git.repository>https://github.com/atraplet/${project.artifactId}</git.repository>
         <argLine/>
     </properties>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>ECOS Solver for Java</description>
-    <url>https://github.com/${git.repository}</url>
+    <url>${git.repository}</url>
 
     <licenses>
         <license>
@@ -40,9 +40,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/${git.repository}.git</connection>
-        <developerConnection>scm:git:https://github.com/${git.repository}.git</developerConnection>
-        <url>https://github.com/${git.repository}/tree/master</url>
+        <connection>scm:git:${git.repository}.git</connection>
+        <developerConnection>scm:git:${git.repository}.git</developerConnection>
+        <url>${git.repository}/tree/master</url>
     </scm>
 
     <distributionManagement>
@@ -62,12 +62,22 @@
             <artifactId>guava</artifactId>
             <version>33.0.0-jre</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.scijava</groupId>
+            <artifactId>native-lib-loader</artifactId>
+            <version>2.5.0</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ustermetrics</groupId>
+            <artifactId>ecos4j-native</artifactId>
+            <version>0.0.2-2.0.10</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
