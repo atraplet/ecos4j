@@ -38,6 +38,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .feasTol(-1.)
                 .build());
+
         assertEquals("feasTol must be positive", exception.getMessage());
     }
 
@@ -46,6 +47,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .absTol(-1.)
                 .build());
+
         assertEquals("absTol must be positive", exception.getMessage());
     }
 
@@ -54,6 +56,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .relTol(-1.)
                 .build());
+
         assertEquals("relTol must be positive", exception.getMessage());
     }
 
@@ -62,6 +65,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .feasTolInacc(-1.)
                 .build());
+
         assertEquals("feasTolInacc must be positive", exception.getMessage());
     }
 
@@ -70,6 +74,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .absTolInacc(-1.)
                 .build());
+
         assertEquals("absTolInacc must be positive", exception.getMessage());
     }
 
@@ -78,6 +83,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .relTolInacc(-1.)
                 .build());
+
         assertEquals("relTolInacc must be positive", exception.getMessage());
     }
 
@@ -86,6 +92,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .nItRef(-1)
                 .build());
+
         assertEquals("nItRef must be positive", exception.getMessage());
     }
 
@@ -94,6 +101,7 @@ class ParametersTest {
         val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Parameters.builder()
                 .maxIt(-1)
                 .build());
+
         assertEquals("maxIt must be positive", exception.getMessage());
     }
 
