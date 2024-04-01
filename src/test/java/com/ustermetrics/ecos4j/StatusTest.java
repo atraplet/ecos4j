@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.ustermetrics.ecos4j.bindings.ecos_h.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 class StatusTest {
 
@@ -56,7 +56,7 @@ class StatusTest {
 
     @Test
     void statusValueOf100ThrowsException() {
-        val exception = assertThrows(IllegalArgumentException.class, () -> Status.valueOf(100));
+        val exception = assertThrowsExactly(IllegalArgumentException.class, () -> Status.valueOf(100));
 
         assertEquals("Unknown status 100", exception.getMessage());
     }
