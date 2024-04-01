@@ -53,13 +53,14 @@ class BindingsTest {
             val status = ECOS_solve(workSeg);
             assertEquals(0, status);
 
+            val tol = 1e-8;
             val x = pwork.x$get(workSeg).reinterpret(C_DOUBLE.byteSize() * n, arena, null).toArray(C_DOUBLE);
             assertArrayEquals(new double[]{0.24879020572078372, 0.049684806182020855, 0.7015249845663684,
-                    3.5308169265756875e-09, 0.19999999978141014}, x, 1e-8);
+                    3.5308169265756875e-09, 0.19999999978141014}, x, tol);
 
             val infoSeg = pwork.info$get(workSeg).reinterpret(stats.sizeof(), arena, null);
             val cost = stats.pcost$get(infoSeg);
-            assertEquals(-0.07154259763411892, cost, 1e-8);
+            assertEquals(-0.07154259763411892, cost, tol);
 
             ECOS_cleanup(workSeg, 0);
         }
