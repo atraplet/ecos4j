@@ -1,20 +1,18 @@
 package com.ustermetrics.ecos4j;
 
-import com.ustermetrics.ecos4j.bindings.ecos_h;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.val;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.ustermetrics.ecos4j.bindings.ecos_h.*;
 
 /**
- * A wrapper class for <a href="https://github.com/embotech/ecos">ECOS</a> solver options, version, and status.
+ * A parameter object for <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
  */
 @Getter
 @Builder
-public class Solver {
+public class Parameters {
 
     @Builder.Default
     private double feasTol = FEASTOL();
@@ -49,8 +47,8 @@ public class Solver {
      * @param verbose      the verbose mode.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
-    public Solver(double feasTol, double absTol, double relTol, double feasTolInacc, double absTolInacc,
-                  double relTolInacc, int nItRef, int maxIt, boolean verbose) {
+    public Parameters(double feasTol, double absTol, double relTol, double feasTolInacc, double absTolInacc,
+                      double relTolInacc, int nItRef, int maxIt, boolean verbose) {
         val errMsg = "%s must be positive";
         checkArgument(feasTol > 0., errMsg, "feasTol");
         checkArgument(absTol > 0., errMsg, "absTol");
@@ -72,46 +70,4 @@ public class Solver {
         this.verbose = verbose;
     }
 
-    /**
-     * @return the version of the <a href="https://github.com/embotech/ecos">ECOS</a> solver.
-     */
-    @NonNull
-    public static String version() {
-        return ecos_h.ECOS_ver().getUtf8String(0);
-    }
-
-    /**
-     * The <a href="https://github.com/embotech/ecos">ECOS</a> solving status from solving a {@link Problem}.
-     */
-    public enum Status {
-        OPTIMAL(ECOS_OPTIMAL()),
-        PINF(ECOS_PINF()),
-        DINF(ECOS_DINF()),
-        INACC_OFFSET(ECOS_INACC_OFFSET()),
-        MAXIT(ECOS_MAXIT()),
-        NUMERICS(ECOS_NUMERICS()),
-        OUTCONE(ECOS_OUTCONE()),
-        SIGINT(ECOS_SIGINT()),
-        FATAL(ECOS_FATAL());
-
-        private final int status;
-
-        Status(int status) {
-            this.status = status;
-        }
-
-        int status() {
-            return status;
-        }
-
-        static Status valueOf(int status) {
-            for (val c : values()) {
-                if (c.status() == status) {
-                    return c;
-                }
-            }
-
-            throw new IllegalArgumentException(STR."Unknown status \{status}");
-        }
-    }
 }
