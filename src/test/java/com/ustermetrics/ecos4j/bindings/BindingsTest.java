@@ -64,4 +64,5 @@ class BindingsTest {
             ECOS_cleanup(workSeg, 0);
         }
     }
+
 }
