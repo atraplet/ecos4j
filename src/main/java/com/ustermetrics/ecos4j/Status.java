@@ -5,7 +5,7 @@ import lombok.val;
 import static com.ustermetrics.ecos4j.bindings.ecos_h.*;
 
 /**
- * The <a href="https://github.com/embotech/ecos">ECOS</a> solving status from solving a {@link Model}.
+ * The <a href="https://github.com/embotech/ecos">ECOS</a> solver status from optimizing a {@link Model}.
  */
 public enum Status {
 
