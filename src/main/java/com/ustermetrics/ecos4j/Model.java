@@ -27,9 +27,6 @@ public class Model implements AutoCloseable {
 
     private enum Stage {NEW, SETUP, OPTIMIZED}
 
-    private static final String STAGE_OPTIMIZED_ERR_MSG = "Model must be in stage optimized";
-    private static final String FATAL_ERR_MSG = "Solver status must not be fatal";
-
     private final Arena arena = Arena.ofConfined();
     private Stage stage = Stage.NEW;
     private long n;
@@ -178,7 +175,6 @@ public class Model implements AutoCloseable {
      */
     public void cleanup() {
         checkState(stage != Stage.NEW, "Model must not be in stage new");
-
         ECOS_cleanup(workSeg, 0);
         stage = Stage.NEW;
     }
@@ -188,9 +184,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pCost() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pcost$get(infoSeg);
     }
 
@@ -199,9 +193,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dCost() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dcost$get(infoSeg);
     }
 
@@ -210,9 +202,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pRes() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pres$get(infoSeg);
     }
 
@@ -221,9 +211,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dRes() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dres$get(infoSeg);
     }
 
@@ -232,9 +220,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pInf() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pinf$get(infoSeg);
     }
 
@@ -243,9 +229,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dInf() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dinf$get(infoSeg);
     }
 
@@ -254,9 +238,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pInfRes() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pinfres$get(infoSeg);
     }
 
@@ -265,9 +247,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dInfRes() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dinfres$get(infoSeg);
     }
 
@@ -276,9 +256,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double gap() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.gap$get(infoSeg);
     }
 
@@ -287,9 +265,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double relGap() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.relgap$get(infoSeg);
     }
 
@@ -298,9 +274,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public long iter() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.iter$get(infoSeg);
     }
 
@@ -309,9 +283,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] x() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.x$get(workSeg).reinterpret(C_DOUBLE.byteSize() * n, arena, null).toArray(C_DOUBLE);
     }
 
@@ -320,9 +292,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] y() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.y$get(workSeg).reinterpret(C_DOUBLE.byteSize() * p, arena, null).toArray(C_DOUBLE);
     }
 
@@ -331,9 +301,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] z() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.z$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
@@ -342,9 +310,7 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] s() {
-        checkState(stage == Stage.OPTIMIZED, STAGE_OPTIMIZED_ERR_MSG);
-        checkState(status != Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.s$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
@@ -354,6 +320,11 @@ public class Model implements AutoCloseable {
             ECOS_cleanup(workSeg, 0);
         }
         arena.close();
+    }
+
+    private void checkStageIsOptimizedAndStatusIsNotFatal() {
+        checkState(stage == Stage.OPTIMIZED, "Model must be in stage optimized");
+        checkState(status != Status.FATAL, "Solver status must not be fatal");
     }
 
 }
