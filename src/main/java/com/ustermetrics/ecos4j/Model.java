@@ -1,5 +1,6 @@
 package com.ustermetrics.ecos4j;
 
+import com.ustermetrics.ecos4j.bindings.ecos_h;
 import com.ustermetrics.ecos4j.bindings.pwork;
 import com.ustermetrics.ecos4j.bindings.settings;
 import com.ustermetrics.ecos4j.bindings.stats;
@@ -17,29 +18,14 @@ import static com.ustermetrics.ecos4j.bindings.ecos_h.*;
 import static java.lang.foreign.MemorySegment.NULL;
 
 /**
- * A convex second-order cone program (SOCP), which can be solved with the
- * <a href="https://github.com/embotech/ecos">ECOS</a> solver.
+ * An optimization model which can be optimized with the <a href="https://github.com/embotech/ecos">ECOS</a> solver.
  * <p>
- * The SOCP is of type
- * <pre>
- * minimize        c'x
- * subject to      Gx + s = h
- *                 Ax = b
- *                 s in K
- * </pre>
- * where x are the primal variables, s are slack variables, c, G, h, A, and b are the problem data, and K is the
- * convex cone. The cone K is the Cartesian product of the positive orthant cone, the second order cone, and the
- * exponential cone.
- * <p>
- * In order to control the lifecycle of native memory, {@link Problem} implements the {@link AutoCloseable}
+ * In order to control the lifecycle of native memory, {@link Model} implements the {@link AutoCloseable}
  * interface and should be used with the <i>try-with-resources</i> statement.
  */
-public class Problem implements AutoCloseable {
+public class Model implements AutoCloseable {
 
-    private enum Stage {NEW, SETUP, SOLVED}
-
-    private static final String STAGE_SOLVED_ERR_MSG = "Problem must be in stage solved";
-    private static final String FATAL_ERR_MSG = "Solver status must not be fatal";
+    private enum Stage {NEW, SETUP, OPTIMIZED}
 
     private final Arena arena = Arena.ofConfined();
     private Stage stage = Stage.NEW;
@@ -49,10 +35,27 @@ public class Problem implements AutoCloseable {
     private MemorySegment workSeg;
     private MemorySegment stgsSeg;
     private MemorySegment infoSeg;
-    private Solver.Status status;
+    private Status status;
 
     /**
-     * Set up the {@link Problem} data.
+     * @return the version of the <a href="https://github.com/embotech/ecos">ECOS</a> solver.
+     */
+    @NonNull
+    public static String version() {
+        return ecos_h.ECOS_ver().getUtf8String(0);
+    }
+
+    /**
+     * Set up the {@link Model} data for a convex second-order cone program (SOCP) of type
+     * <pre>
+     * minimize        c'x
+     * subject to      Gx + s = h
+     *                 Ax = b
+     *                 s in K
+     * </pre>
+     * where x are the primal variables, s are slack variables, c, G, h, A, and b are the model data, and K is the
+     * convex cone. The cone K is the Cartesian product of the positive orthant cone, the second order cone, and the
+     * exponential cone.
      *
      * @param l    the dimension of the positive orthant.
      * @param q    the dimensions of each cone.
@@ -71,7 +74,7 @@ public class Problem implements AutoCloseable {
     public void setup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
                       long @NonNull [] gir, double @NonNull [] c, double @NonNull [] h, double @NonNull [] apr,
                       long @NonNull [] ajc, long @NonNull [] air, double @NonNull [] b) {
-        checkState(stage == Stage.NEW, "Problem must be in stage new");
+        checkState(stage == Stage.NEW, "Model must be in stage new");
         checkArgument(apr.length == 0 && ajc.length == 0 && air.length == 0 && b.length == 0
                 || apr.length > 0 && ajc.length > 0 && air.length > 0 && b.length > 0);
         val nonNegErrMsg = "%s must be non-negative";
@@ -111,7 +114,9 @@ public class Problem implements AutoCloseable {
     }
 
     /**
-     * Set up the {@link Problem} data.
+     * Same as
+     * {@link Model#setup(long l, long[] q, long nExC, double[] gpr, long[] gjc, long[] gir, double[] c, double[] h, double[] apr, long[] ajc, long[] air, double[] b)}
+     * without equality constraint, i.e. {@code apr}, {@code ajc}, {@code air}, and {@code b} are empty arrays.
      *
      * @param l    the dimension of the positive orthant.
      * @param q    the dimensions of each cone.
@@ -121,220 +126,191 @@ public class Problem implements AutoCloseable {
      * @param gir  the sparse G matrix row index (CCS).
      * @param c    the cost function weights.
      * @param h    the right-hand-side of the cone constraints.
-     * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public void setup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
                       long @NonNull [] gir, double @NonNull [] c, double @NonNull [] h) {
         setup(l, q, nExC, gpr, gjc, gir, c, h, new double[]{}, new long[]{}, new long[]{}, new double[]{});
     }
 
-    private void updateSettings(@NonNull Solver solver) {
-        settings.feastol$set(stgsSeg, solver.getFeasTol());
-        settings.abstol$set(stgsSeg, solver.getAbsTol());
-        settings.reltol$set(stgsSeg, solver.getRelTol());
-        settings.feastol_inacc$set(stgsSeg, solver.getFeasTolInacc());
-        settings.abstol_inacc$set(stgsSeg, solver.getAbsTolInacc());
-        settings.reltol_inacc$set(stgsSeg, solver.getRelTolInacc());
-        settings.maxit$set(stgsSeg, solver.getMaxIt());
-        settings.nitref$set(stgsSeg, solver.getNItRef());
-        settings.verbose$set(stgsSeg, solver.isVerbose() ? 1 : 0);
+    /**
+     * Sets the <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
+     *
+     * @param parameters the parameter object for the solver options.
+     */
+    public void setParameters(@NonNull Parameters parameters) {
+        checkState(stage != Stage.NEW, "Model must not be in stage new");
+
+        settings.feastol$set(stgsSeg, parameters.getFeasTol());
+        settings.abstol$set(stgsSeg, parameters.getAbsTol());
+        settings.reltol$set(stgsSeg, parameters.getRelTol());
+        settings.feastol_inacc$set(stgsSeg, parameters.getFeasTolInacc());
+        settings.abstol_inacc$set(stgsSeg, parameters.getAbsTolInacc());
+        settings.reltol_inacc$set(stgsSeg, parameters.getRelTolInacc());
+        settings.maxit$set(stgsSeg, parameters.getMaxIt());
+        settings.nitref$set(stgsSeg, parameters.getNItRef());
+        settings.verbose$set(stgsSeg, parameters.isVerbose() ? 1 : 0);
     }
 
     /**
-     * Solves this {@link Problem} with <a href="https://github.com/embotech/ecos">ECOS</a>.
+     * Optimizes this {@link Model} with the <a href="https://github.com/embotech/ecos">ECOS</a> solver.
      *
-     * @param solver the wrapper class for <a href="https://github.com/embotech/ecos">ECOS</a>
-     *               solver options, version, and status.
-     * @return the solving status.
+     * @return the solver status.
      */
-    public Solver.Status solve(@NonNull Solver solver) {
-        checkState(stage == Stage.SETUP, "Problem must be in stage setup");
-
-        updateSettings(solver);
+    public Status optimize() {
+        checkState(stage != Stage.NEW, "Model must not be in stage new");
 
         val status = ECOS_solve(workSeg);
-        if (solver.isVerbose()) {
+        if (settings.verbose$get(stgsSeg) == 1) {
             fflush(NULL);
         }
 
-        this.status = Solver.Status.valueOf((int) status);
-        stage = Stage.SOLVED;
+        this.status = Status.valueOf((int) status);
+        stage = Stage.OPTIMIZED;
 
         return this.status;
     }
 
     /**
-     * Solves this {@link Problem} with <a href="https://github.com/embotech/ecos">ECOS</a>
-     * using the default options.
-     *
-     * @return the solving status.
+     * Cleanup: free this {@link Model} native memory.
      */
-    public Solver.Status solve() {
-        return solve(Solver.builder().build());
+    public void cleanup() {
+        checkState(stage != Stage.NEW, "Model must not be in stage new");
+        ECOS_cleanup(workSeg, 0);
+        stage = Stage.NEW;
     }
 
     /**
-     * @return the primal objective of this solved {@link Problem}.
+     * @return the primal objective of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pCost() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pcost$get(infoSeg);
     }
 
     /**
-     * @return the dual objective of this solved {@link Problem}.
+     * @return the dual objective of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dCost() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dcost$get(infoSeg);
     }
 
     /**
-     * @return the primal residual on inequalities and equalities of this solved {@link Problem}.
+     * @return the primal residual on inequalities and equalities of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pRes() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pres$get(infoSeg);
     }
 
     /**
-     * @return the dual residual of this solved {@link Problem}.
+     * @return the dual residual of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dRes() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dres$get(infoSeg);
     }
 
     /**
-     * @return the primal infeasibility measure of this solved {@link Problem}.
+     * @return the primal infeasibility measure of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pInf() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pinf$get(infoSeg);
     }
 
     /**
-     * @return the dual infeasibility measure of this solved {@link Problem}.
+     * @return the dual infeasibility measure of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dInf() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dinf$get(infoSeg);
     }
 
     /**
-     * @return the residual as primal infeasibility certificate of this solved {@link Problem}.
+     * @return the residual as primal infeasibility certificate of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double pInfRes() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.pinfres$get(infoSeg);
     }
 
     /**
-     * @return the residual as dual infeasibility certificate of this solved {@link Problem}.
+     * @return the residual as dual infeasibility certificate of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double dInfRes() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.dinfres$get(infoSeg);
     }
 
     /**
-     * @return the duality gap of this solved {@link Problem}.
+     * @return the duality gap of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double gap() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.gap$get(infoSeg);
     }
 
     /**
-     * @return the relative duality gap of this solved {@link Problem}.
+     * @return the relative duality gap of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double relGap() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.relgap$get(infoSeg);
     }
 
     /**
-     * @return the performed number of iterations until this {@link Problem} was solved.
+     * @return the performed number of iterations until this {@link Model} was optimized.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public long iter() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return stats.iter$get(infoSeg);
     }
 
     /**
-     * @return the primal variables of this solved {@link Problem}.
+     * @return the primal variables of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] x() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.x$get(workSeg).reinterpret(C_DOUBLE.byteSize() * n, arena, null).toArray(C_DOUBLE);
     }
 
     /**
-     * @return the dual variables for the equality constraints of this solved {@link Problem}.
+     * @return the dual variables for the equality constraints of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] y() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.y$get(workSeg).reinterpret(C_DOUBLE.byteSize() * p, arena, null).toArray(C_DOUBLE);
     }
 
     /**
-     * @return the dual variables for the inequality constraints of this solved {@link Problem}.
+     * @return the dual variables for the inequality constraints of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] z() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.z$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
     /**
-     * @return the slack variables of this solved {@link Problem}.
+     * @return the slack variables of this optimized {@link Model}.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public double @NonNull [] s() {
-        checkState(stage == Stage.SOLVED, STAGE_SOLVED_ERR_MSG);
-        checkState(status != Solver.Status.FATAL, FATAL_ERR_MSG);
-
+        checkStageIsOptimizedAndStatusIsNotFatal();
         return pwork.s$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
@@ -345,4 +321,10 @@ public class Problem implements AutoCloseable {
         }
         arena.close();
     }
+
+    private void checkStageIsOptimizedAndStatusIsNotFatal() {
+        checkState(stage == Stage.OPTIMIZED, "Model must be in stage optimized");
+        checkState(status != Status.FATAL, "Solver status must not be fatal");
+    }
+
 }
