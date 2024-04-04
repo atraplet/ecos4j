@@ -82,3 +82,8 @@ git push origin v$VERSION
 ```
 
 This will trigger the upload of the package to Maven Central via GitHub Actions.
+
+## Credits
+
+This project is based on the native open source mathematical programming solver [ECOS](https://github.com/embotech/ecos),
+which is developed and maintained by [embotech](https://www.embotech.com), Alexander Domahidi, and others.
