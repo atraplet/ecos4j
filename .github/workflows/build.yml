@@ -27,7 +27,7 @@ jobs:
           LD_LIBRARY_PATH: ./
         run: mvn -B clean verify -P coverage --file pom.xml
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v4.3.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: atraplet/ecos4j
