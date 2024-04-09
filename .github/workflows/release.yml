@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ build ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Get JDK version from Maven project
         run: |
           JDK_VERSION=$(mvn help:evaluate -Dexpression=maven.compiler.source -q -DforceStdout)
