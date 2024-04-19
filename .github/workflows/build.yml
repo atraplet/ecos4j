@@ -27,8 +27,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven
-        env:
-          LD_LIBRARY_PATH: ./
         run: mvn -B clean verify -P coverage --file pom.xml
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest'
