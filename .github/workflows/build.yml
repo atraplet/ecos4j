@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: [ ubuntu-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
       - name: Get JDK version from Maven project
