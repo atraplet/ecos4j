@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     uses: atraplet/ecos4j/.github/workflows/build.yml@master
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
   release:
     runs-on: ubuntu-latest
