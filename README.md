@@ -72,18 +72,19 @@ Update the version in the `pom.xml`, create a tag, and push it by running
 
 ```
 export VERSION=X.Y.Z
-vi RELEASE.md
 git checkout --detach HEAD
 sed -i -E "s/<version>[0-9]+\-SNAPSHOT<\/version>/<version>$VERSION<\/version>/g" pom.xml
-git add RELEASE.md
-git commit -p -m "v$VERSION" pom.xml RELEASE.md
+git commit -m "v$VERSION" pom.xml
 git tag v$VERSION
 git push origin v$VERSION
 ```
 
 This will trigger the upload of the package to Maven Central via GitHub Actions.
 
+Then, go to the GitHub repository [releases page](https://github.com/atraplet/ecos4j/releases) and update the release.
+
 ## Credits
 
-This project is based on the native open source mathematical programming solver [ECOS](https://github.com/embotech/ecos),
+This project is based on the native open source mathematical programming
+solver [ECOS](https://github.com/embotech/ecos),
 which is developed and maintained by [embotech](https://www.embotech.com), Alexander Domahidi, and others.
