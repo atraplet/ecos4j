@@ -26,4 +26,4 @@ $JEXTRACT \
   -l ecos \
   --target-package com.ustermetrics.ecos4j.bindings \
   --output "${ECOS4J}"/src/main/java \
-  --source @"${ECOS4J}"/bindings/includes.txt "${ECOS}"/include/ecos.h
+  @"${ECOS4J}"/bindings/includes.txt "${ECOS}"/include/ecos.h
