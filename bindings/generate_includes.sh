@@ -26,6 +26,6 @@ ${JEXTRACT} \
   --dump-includes "${TMP_INCLUDES}" \
   "${ECOS}"/include/ecos.h
 
-# select ecos symbols plus fflush() for flushing C buffers
-grep "ecos\|fflush" "${TMP_INCLUDES}" >"${INCLUDES}"
+# select ecos symbols plus fflush() for flushing C buffers, exclude timer
+grep "ecos\|fflush" "${TMP_INCLUDES}" | grep -v "timer" >"${INCLUDES}"
 rm -f "${TMP_INCLUDES}"
