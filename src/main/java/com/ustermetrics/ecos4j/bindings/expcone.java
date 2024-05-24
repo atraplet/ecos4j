@@ -2,40 +2,317 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
+
 import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.MemoryLayout.PathElement.*;
+
 /**
- * {@snippet :
+ * {@snippet lang=c :
  * struct expcone {
  *     idxint colstart[3];
  *     pfloat v[6];
  *     pfloat g[3];
- * };
+ * }
  * }
  */
 public class expcone {
 
-    public static MemoryLayout $LAYOUT() {
-        return constants$8.const$0;
+    expcone() {
+        // Should not be called directly
     }
-    public static MemorySegment colstart$slice(MemorySegment seg) {
-        return seg.asSlice(0, 24);
-    }
-    public static MemorySegment v$slice(MemorySegment seg) {
-        return seg.asSlice(24, 48);
-    }
-    public static MemorySegment g$slice(MemorySegment seg) {
-        return seg.asSlice(72, 24);
-    }
-    public static long sizeof() { return $LAYOUT().byteSize(); }
-    public static MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }
-    public static MemorySegment allocateArray(long len, SegmentAllocator allocator) {
-        return allocator.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
-    }
-    public static MemorySegment ofAddress(MemorySegment addr, Arena arena) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1, arena); }
-}
 
+    private static final GroupLayout $LAYOUT = MemoryLayout.structLayout(
+        MemoryLayout.sequenceLayout(3, ecos_h.C_LONG_LONG).withName("colstart"),
+        MemoryLayout.sequenceLayout(6, ecos_h.C_DOUBLE).withName("v"),
+        MemoryLayout.sequenceLayout(3, ecos_h.C_DOUBLE).withName("g")
+    ).withName("expcone");
+
+    /**
+     * The layout of this struct
+     */
+    public static final GroupLayout layout() {
+        return $LAYOUT;
+    }
+
+    private static final SequenceLayout colstart$LAYOUT = (SequenceLayout)$LAYOUT.select(groupElement("colstart"));
+
+    /**
+     * Layout for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static final SequenceLayout colstart$layout() {
+        return colstart$LAYOUT;
+    }
+
+    private static final long colstart$OFFSET = 0;
+
+    /**
+     * Offset for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static final long colstart$offset() {
+        return colstart$OFFSET;
+    }
+
+    /**
+     * Getter for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static MemorySegment colstart(MemorySegment struct) {
+        return struct.asSlice(colstart$OFFSET, colstart$LAYOUT.byteSize());
+    }
+
+    /**
+     * Setter for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static void colstart(MemorySegment struct, MemorySegment fieldValue) {
+        MemorySegment.copy(fieldValue, 0L, struct, colstart$OFFSET, colstart$LAYOUT.byteSize());
+    }
+
+    private static long[] colstart$DIMS = { 3 };
+
+    /**
+     * Dimensions for array field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static long[] colstart$dimensions() {
+        return colstart$DIMS;
+    }
+    private static final VarHandle colstart$ELEM_HANDLE = colstart$LAYOUT.varHandle(sequenceElement());
+
+    /**
+     * Indexed getter for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static long colstart(MemorySegment struct, long index0) {
+        return (long)colstart$ELEM_HANDLE.get(struct, 0L, index0);
+    }
+
+    /**
+     * Indexed setter for field:
+     * {@snippet lang=c :
+     * idxint colstart[3]
+     * }
+     */
+    public static void colstart(MemorySegment struct, long index0, long fieldValue) {
+        colstart$ELEM_HANDLE.set(struct, 0L, index0, fieldValue);
+    }
+
+    private static final SequenceLayout v$LAYOUT = (SequenceLayout)$LAYOUT.select(groupElement("v"));
+
+    /**
+     * Layout for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static final SequenceLayout v$layout() {
+        return v$LAYOUT;
+    }
+
+    private static final long v$OFFSET = 24;
+
+    /**
+     * Offset for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static final long v$offset() {
+        return v$OFFSET;
+    }
+
+    /**
+     * Getter for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static MemorySegment v(MemorySegment struct) {
+        return struct.asSlice(v$OFFSET, v$LAYOUT.byteSize());
+    }
+
+    /**
+     * Setter for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static void v(MemorySegment struct, MemorySegment fieldValue) {
+        MemorySegment.copy(fieldValue, 0L, struct, v$OFFSET, v$LAYOUT.byteSize());
+    }
+
+    private static long[] v$DIMS = { 6 };
+
+    /**
+     * Dimensions for array field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static long[] v$dimensions() {
+        return v$DIMS;
+    }
+    private static final VarHandle v$ELEM_HANDLE = v$LAYOUT.varHandle(sequenceElement());
+
+    /**
+     * Indexed getter for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static double v(MemorySegment struct, long index0) {
+        return (double)v$ELEM_HANDLE.get(struct, 0L, index0);
+    }
+
+    /**
+     * Indexed setter for field:
+     * {@snippet lang=c :
+     * pfloat v[6]
+     * }
+     */
+    public static void v(MemorySegment struct, long index0, double fieldValue) {
+        v$ELEM_HANDLE.set(struct, 0L, index0, fieldValue);
+    }
+
+    private static final SequenceLayout g$LAYOUT = (SequenceLayout)$LAYOUT.select(groupElement("g"));
+
+    /**
+     * Layout for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static final SequenceLayout g$layout() {
+        return g$LAYOUT;
+    }
+
+    private static final long g$OFFSET = 72;
+
+    /**
+     * Offset for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static final long g$offset() {
+        return g$OFFSET;
+    }
+
+    /**
+     * Getter for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static MemorySegment g(MemorySegment struct) {
+        return struct.asSlice(g$OFFSET, g$LAYOUT.byteSize());
+    }
+
+    /**
+     * Setter for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static void g(MemorySegment struct, MemorySegment fieldValue) {
+        MemorySegment.copy(fieldValue, 0L, struct, g$OFFSET, g$LAYOUT.byteSize());
+    }
+
+    private static long[] g$DIMS = { 3 };
+
+    /**
+     * Dimensions for array field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static long[] g$dimensions() {
+        return g$DIMS;
+    }
+    private static final VarHandle g$ELEM_HANDLE = g$LAYOUT.varHandle(sequenceElement());
+
+    /**
+     * Indexed getter for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static double g(MemorySegment struct, long index0) {
+        return (double)g$ELEM_HANDLE.get(struct, 0L, index0);
+    }
+
+    /**
+     * Indexed setter for field:
+     * {@snippet lang=c :
+     * pfloat g[3]
+     * }
+     */
+    public static void g(MemorySegment struct, long index0, double fieldValue) {
+        g$ELEM_HANDLE.set(struct, 0L, index0, fieldValue);
+    }
+
+    /**
+     * Obtains a slice of {@code arrayParam} which selects the array element at {@code index}.
+     * The returned segment has address {@code arrayParam.address() + index * layout().byteSize()}
+     */
+    public static MemorySegment asSlice(MemorySegment array, long index) {
+        return array.asSlice(layout().byteSize() * index);
+    }
+
+    /**
+     * The size (in bytes) of this struct
+     */
+    public static long sizeof() { return layout().byteSize(); }
+
+    /**
+     * Allocate a segment of size {@code layout().byteSize()} using {@code allocator}
+     */
+    public static MemorySegment allocate(SegmentAllocator allocator) {
+        return allocator.allocate(layout());
+    }
+
+    /**
+     * Allocate an array of size {@code elementCount} using {@code allocator}.
+     * The returned segment has size {@code elementCount * layout().byteSize()}.
+     */
+    public static MemorySegment allocateArray(long elementCount, SegmentAllocator allocator) {
+        return allocator.allocate(MemoryLayout.sequenceLayout(elementCount, layout()));
+    }
+
+    /**
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code layout().byteSize()}
+     */
+    public static MemorySegment reinterpret(MemorySegment addr, Arena arena, Consumer<MemorySegment> cleanup) {
+        return reinterpret(addr, 1, arena, cleanup);
+    }
+
+    /**
+     * Reinterprets {@code addr} using target {@code arena} and {@code cleanupAction} (if any).
+     * The returned segment has size {@code elementCount * layout().byteSize()}
+     */
+    public static MemorySegment reinterpret(MemorySegment addr, long elementCount, Arena arena, Consumer<MemorySegment> cleanup) {
+        return addr.reinterpret(layout().byteSize() * elementCount, arena, cleanup);
+    }
+}
 

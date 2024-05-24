@@ -2,20 +2,30 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import java.lang.invoke.*;
 import java.lang.foreign.*;
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
+
 import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.MemoryLayout.PathElement.*;
+
 /**
- * {@snippet :
- * typedef struct SuiteSparse_config_struct SuiteSparse_config;
+ * {@snippet lang=c :
+ * typedef struct SuiteSparse_config_struct {
+ *     void *(*malloc_memory)(size_t);
+ *     void *(*realloc_memory)(void *, size_t);
+ *     void (*free_memory)(void *);
+ *     void *(*calloc_memory)(size_t, size_t);
+ * } SuiteSparse_config
  * }
  */
-public final class SuiteSparse_config extends SuiteSparse_config_struct {
+public class SuiteSparse_config extends SuiteSparse_config_struct {
 
-    // Suppresses default constructor, ensuring non-instantiability.
-    private SuiteSparse_config() {}
+    SuiteSparse_config() {
+        // Should not be called directly
+    }
 }
-
 

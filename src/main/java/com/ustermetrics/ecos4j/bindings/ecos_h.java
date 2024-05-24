@@ -2,1177 +2,3191 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import java.lang.invoke.*;
 import java.lang.foreign.*;
-import static java.lang.foreign.ValueLayout.*;
-public class ecos_h  {
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 
-    public static final OfByte C_CHAR = JAVA_BYTE;
-    public static final OfShort C_SHORT = JAVA_SHORT;
-    public static final OfInt C_INT = JAVA_INT;
-    public static final OfLong C_LONG = JAVA_LONG;
-    public static final OfLong C_LONG_LONG = JAVA_LONG;
-    public static final OfFloat C_FLOAT = JAVA_FLOAT;
-    public static final OfDouble C_DOUBLE = JAVA_DOUBLE;
-    public static final AddressLayout C_POINTER = RuntimeHelper.POINTER;
+import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.MemoryLayout.PathElement.*;
+
+public class ecos_h {
+
+    ecos_h() {
+        // Should not be called directly
+    }
+
+    static final Arena LIBRARY_ARENA = Arena.ofAuto();
+    static final boolean TRACE_DOWNCALLS = Boolean.getBoolean("jextract.trace.downcalls");
+
+    static void traceDowncall(String name, Object... args) {
+         String traceArgs = Arrays.stream(args)
+                       .map(Object::toString)
+                       .collect(Collectors.joining(", "));
+         System.out.printf("%s(%s)\n", name, traceArgs);
+    }
+
+    static MemorySegment findOrThrow(String symbol) {
+        return SYMBOL_LOOKUP.find(symbol)
+            .orElseThrow(() -> new UnsatisfiedLinkError("unresolved symbol: " + symbol));
+    }
+
+    static MethodHandle upcallHandle(Class<?> fi, String name, FunctionDescriptor fdesc) {
+        try {
+            return MethodHandles.lookup().findVirtual(fi, name, fdesc.toMethodType());
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    static MemoryLayout align(MemoryLayout layout, long align) {
+        return switch (layout) {
+            case PaddingLayout p -> p;
+            case ValueLayout v -> v.withByteAlignment(align);
+            case GroupLayout g -> {
+                MemoryLayout[] alignedMembers = g.memberLayouts().stream()
+                        .map(m -> align(m, align)).toArray(MemoryLayout[]::new);
+                yield g instanceof StructLayout ?
+                        MemoryLayout.structLayout(alignedMembers) : MemoryLayout.unionLayout(alignedMembers);
+            }
+            case SequenceLayout s -> MemoryLayout.sequenceLayout(s.elementCount(), align(s.elementLayout(), align));
+        };
+    }
+
+    static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.libraryLookup(System.mapLibraryName("ecos"), LIBRARY_ARENA)
+            .or(SymbolLookup.loaderLookup())
+            .or(Linker.nativeLinker().defaultLookup());
+
+    public static final ValueLayout.OfBoolean C_BOOL = ValueLayout.JAVA_BOOLEAN;
+    public static final ValueLayout.OfByte C_CHAR = ValueLayout.JAVA_BYTE;
+    public static final ValueLayout.OfShort C_SHORT = ValueLayout.JAVA_SHORT;
+    public static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT;
+    public static final ValueLayout.OfLong C_LONG_LONG = ValueLayout.JAVA_LONG;
+    public static final ValueLayout.OfFloat C_FLOAT = ValueLayout.JAVA_FLOAT;
+    public static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
+    public static final AddressLayout C_POINTER = ValueLayout.ADDRESS
+            .withTargetLayout(MemoryLayout.sequenceLayout(java.lang.Long.MAX_VALUE, JAVA_BYTE));
+    public static final ValueLayout.OfLong C_LONG = ValueLayout.JAVA_LONG;
+    private static final int SUITESPARSE_MAIN_VERSION = (int)4L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SUITESPARSE_MAIN_VERSION 4
      * }
      */
     public static int SUITESPARSE_MAIN_VERSION() {
-        return (int)4L;
+        return SUITESPARSE_MAIN_VERSION;
     }
+    private static final int SUITESPARSE_SUB_VERSION = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SUITESPARSE_SUB_VERSION 0
      * }
      */
     public static int SUITESPARSE_SUB_VERSION() {
-        return (int)0L;
+        return SUITESPARSE_SUB_VERSION;
     }
+    private static final int SUITESPARSE_SUBSUB_VERSION = (int)2L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SUITESPARSE_SUBSUB_VERSION 2
      * }
      */
     public static int SUITESPARSE_SUBSUB_VERSION() {
-        return (int)2L;
+        return SUITESPARSE_SUBSUB_VERSION;
     }
     /**
-     * {@snippet :
-     * typedef double pfloat;
+     * {@snippet lang=c :
+     * typedef double pfloat
      * }
      */
-    public static final OfDouble pfloat = JAVA_DOUBLE;
-    public static MethodHandle fflush$MH() {
-        return RuntimeHelper.requireNonNull(constants$0.const$1,"fflush");
+    public static final OfDouble pfloat = ecos_h.C_DOUBLE;
+
+    private static class fflush {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_INT,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("fflush");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * int fflush(FILE* __stream);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int fflush(FILE *__stream)
+     * }
+     */
+    public static FunctionDescriptor fflush$descriptor() {
+        return fflush.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int fflush(FILE *__stream)
+     * }
+     */
+    public static MethodHandle fflush$handle() {
+        return fflush.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int fflush(FILE *__stream)
+     * }
+     */
+    public static MemorySegment fflush$address() {
+        return fflush.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int fflush(FILE *__stream)
      * }
      */
     public static int fflush(MemorySegment __stream) {
-        var mh$ = fflush$MH();
+        var mh$ = fflush.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("fflush", __stream);
+            }
             return (int)mh$.invokeExact(__stream);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle fflush_unlocked$MH() {
-        return RuntimeHelper.requireNonNull(constants$0.const$2,"fflush_unlocked");
+
+    private static class fflush_unlocked {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_INT,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("fflush_unlocked");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * int fflush_unlocked(FILE* __stream);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * extern int fflush_unlocked(FILE *__stream)
+     * }
+     */
+    public static FunctionDescriptor fflush_unlocked$descriptor() {
+        return fflush_unlocked.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * extern int fflush_unlocked(FILE *__stream)
+     * }
+     */
+    public static MethodHandle fflush_unlocked$handle() {
+        return fflush_unlocked.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * extern int fflush_unlocked(FILE *__stream)
+     * }
+     */
+    public static MemorySegment fflush_unlocked$address() {
+        return fflush_unlocked.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * extern int fflush_unlocked(FILE *__stream)
      * }
      */
     public static int fflush_unlocked(MemorySegment __stream) {
-        var mh$ = fflush_unlocked$MH();
+        var mh$ = fflush_unlocked.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("fflush_unlocked", __stream);
+            }
             return (int)mh$.invokeExact(__stream);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle SuiteSparse_malloc$MH() {
-        return RuntimeHelper.requireNonNull(constants$3.const$3,"SuiteSparse_malloc");
+
+    private static class SuiteSparse_malloc {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG,
+            ecos_h.C_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("SuiteSparse_malloc");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void* SuiteSparse_malloc(size_t nitems, size_t size_of_item, int* ok, SuiteSparse_config* config);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_malloc(size_t nitems, size_t size_of_item, int *ok, SuiteSparse_config *config)
+     * }
+     */
+    public static FunctionDescriptor SuiteSparse_malloc$descriptor() {
+        return SuiteSparse_malloc.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_malloc(size_t nitems, size_t size_of_item, int *ok, SuiteSparse_config *config)
+     * }
+     */
+    public static MethodHandle SuiteSparse_malloc$handle() {
+        return SuiteSparse_malloc.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_malloc(size_t nitems, size_t size_of_item, int *ok, SuiteSparse_config *config)
+     * }
+     */
+    public static MemorySegment SuiteSparse_malloc$address() {
+        return SuiteSparse_malloc.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void *SuiteSparse_malloc(size_t nitems, size_t size_of_item, int *ok, SuiteSparse_config *config)
      * }
      */
     public static MemorySegment SuiteSparse_malloc(long nitems, long size_of_item, MemorySegment ok, MemorySegment config) {
-        var mh$ = SuiteSparse_malloc$MH();
+        var mh$ = SuiteSparse_malloc.HANDLE;
         try {
-            return (java.lang.foreign.MemorySegment)mh$.invokeExact(nitems, size_of_item, ok, config);
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SuiteSparse_malloc", nitems, size_of_item, ok, config);
+            }
+            return (MemorySegment)mh$.invokeExact(nitems, size_of_item, ok, config);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle SuiteSparse_free$MH() {
-        return RuntimeHelper.requireNonNull(constants$3.const$5,"SuiteSparse_free");
+
+    private static class SuiteSparse_free {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("SuiteSparse_free");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void* SuiteSparse_free(void* p, SuiteSparse_config* config);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_free(void *p, SuiteSparse_config *config)
+     * }
+     */
+    public static FunctionDescriptor SuiteSparse_free$descriptor() {
+        return SuiteSparse_free.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_free(void *p, SuiteSparse_config *config)
+     * }
+     */
+    public static MethodHandle SuiteSparse_free$handle() {
+        return SuiteSparse_free.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void *SuiteSparse_free(void *p, SuiteSparse_config *config)
+     * }
+     */
+    public static MemorySegment SuiteSparse_free$address() {
+        return SuiteSparse_free.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void *SuiteSparse_free(void *p, SuiteSparse_config *config)
      * }
      */
     public static MemorySegment SuiteSparse_free(MemorySegment p, MemorySegment config) {
-        var mh$ = SuiteSparse_free$MH();
+        var mh$ = SuiteSparse_free.HANDLE;
         try {
-            return (java.lang.foreign.MemorySegment)mh$.invokeExact(p, config);
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SuiteSparse_free", p, config);
+            }
+            return (MemorySegment)mh$.invokeExact(p, config);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle SuiteSparse_tic$MH() {
-        return RuntimeHelper.requireNonNull(constants$4.const$0,"SuiteSparse_tic");
+
+    private static class SuiteSparse_tic {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("SuiteSparse_tic");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void SuiteSparse_tic(double tic[2]);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void SuiteSparse_tic(double tic[2])
+     * }
+     */
+    public static FunctionDescriptor SuiteSparse_tic$descriptor() {
+        return SuiteSparse_tic.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void SuiteSparse_tic(double tic[2])
+     * }
+     */
+    public static MethodHandle SuiteSparse_tic$handle() {
+        return SuiteSparse_tic.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void SuiteSparse_tic(double tic[2])
+     * }
+     */
+    public static MemorySegment SuiteSparse_tic$address() {
+        return SuiteSparse_tic.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void SuiteSparse_tic(double tic[2])
      * }
      */
     public static void SuiteSparse_tic(MemorySegment tic) {
-        var mh$ = SuiteSparse_tic$MH();
+        var mh$ = SuiteSparse_tic.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SuiteSparse_tic", tic);
+            }
             mh$.invokeExact(tic);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle SuiteSparse_toc$MH() {
-        return RuntimeHelper.requireNonNull(constants$4.const$2,"SuiteSparse_toc");
+
+    private static class SuiteSparse_toc {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("SuiteSparse_toc");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * double SuiteSparse_toc(double tic[2]);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * double SuiteSparse_toc(double tic[2])
+     * }
+     */
+    public static FunctionDescriptor SuiteSparse_toc$descriptor() {
+        return SuiteSparse_toc.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * double SuiteSparse_toc(double tic[2])
+     * }
+     */
+    public static MethodHandle SuiteSparse_toc$handle() {
+        return SuiteSparse_toc.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * double SuiteSparse_toc(double tic[2])
+     * }
+     */
+    public static MemorySegment SuiteSparse_toc$address() {
+        return SuiteSparse_toc.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * double SuiteSparse_toc(double tic[2])
      * }
      */
     public static double SuiteSparse_toc(MemorySegment tic) {
-        var mh$ = SuiteSparse_toc$MH();
+        var mh$ = SuiteSparse_toc.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SuiteSparse_toc", tic);
+            }
             return (double)mh$.invokeExact(tic);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle SuiteSparse_time$MH() {
-        return RuntimeHelper.requireNonNull(constants$4.const$4,"SuiteSparse_time");
+
+    private static class SuiteSparse_time {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE    );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("SuiteSparse_time");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * double SuiteSparse_time();
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * double SuiteSparse_time()
+     * }
+     */
+    public static FunctionDescriptor SuiteSparse_time$descriptor() {
+        return SuiteSparse_time.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * double SuiteSparse_time()
+     * }
+     */
+    public static MethodHandle SuiteSparse_time$handle() {
+        return SuiteSparse_time.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * double SuiteSparse_time()
+     * }
+     */
+    public static MemorySegment SuiteSparse_time$address() {
+        return SuiteSparse_time.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * double SuiteSparse_time()
      * }
      */
     public static double SuiteSparse_time() {
-        var mh$ = SuiteSparse_time$MH();
+        var mh$ = SuiteSparse_time.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("SuiteSparse_time");
+            }
             return (double)mh$.invokeExact();
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
     /**
-     * {@snippet :
-     * typedef long long idxint;
+     * {@snippet lang=c :
+     * typedef long long idxint
      * }
      */
-    public static final OfLong idxint = JAVA_LONG;
-    public static MethodHandle sparseMV$MH() {
-        return RuntimeHelper.requireNonNull(constants$6.const$1,"sparseMV");
+    public static final OfLong idxint = ecos_h.C_LONG_LONG;
+
+    private static class sparseMV {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("sparseMV");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void sparseMV(spmat* A, pfloat* x, pfloat* y, idxint a, idxint newVector);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void sparseMV(spmat *A, pfloat *x, pfloat *y, idxint a, idxint newVector)
+     * }
+     */
+    public static FunctionDescriptor sparseMV$descriptor() {
+        return sparseMV.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void sparseMV(spmat *A, pfloat *x, pfloat *y, idxint a, idxint newVector)
+     * }
+     */
+    public static MethodHandle sparseMV$handle() {
+        return sparseMV.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void sparseMV(spmat *A, pfloat *x, pfloat *y, idxint a, idxint newVector)
+     * }
+     */
+    public static MemorySegment sparseMV$address() {
+        return sparseMV.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void sparseMV(spmat *A, pfloat *x, pfloat *y, idxint a, idxint newVector)
      * }
      */
     public static void sparseMV(MemorySegment A, MemorySegment x, MemorySegment y, long a, long newVector) {
-        var mh$ = sparseMV$MH();
+        var mh$ = sparseMV.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("sparseMV", A, x, y, a, newVector);
+            }
             mh$.invokeExact(A, x, y, a, newVector);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle sparseMtVm$MH() {
-        return RuntimeHelper.requireNonNull(constants$6.const$2,"sparseMtVm");
+
+    private static class sparseMtVm {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("sparseMtVm");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void sparseMtVm(spmat* A, pfloat* x, pfloat* y, idxint newVector, idxint skipDiagonal);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void sparseMtVm(spmat *A, pfloat *x, pfloat *y, idxint newVector, idxint skipDiagonal)
+     * }
+     */
+    public static FunctionDescriptor sparseMtVm$descriptor() {
+        return sparseMtVm.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void sparseMtVm(spmat *A, pfloat *x, pfloat *y, idxint newVector, idxint skipDiagonal)
+     * }
+     */
+    public static MethodHandle sparseMtVm$handle() {
+        return sparseMtVm.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void sparseMtVm(spmat *A, pfloat *x, pfloat *y, idxint newVector, idxint skipDiagonal)
+     * }
+     */
+    public static MemorySegment sparseMtVm$address() {
+        return sparseMtVm.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void sparseMtVm(spmat *A, pfloat *x, pfloat *y, idxint newVector, idxint skipDiagonal)
      * }
      */
     public static void sparseMtVm(MemorySegment A, MemorySegment x, MemorySegment y, long newVector, long skipDiagonal) {
-        var mh$ = sparseMtVm$MH();
+        var mh$ = sparseMtVm.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("sparseMtVm", A, x, y, newVector, skipDiagonal);
+            }
             mh$.invokeExact(A, x, y, newVector, skipDiagonal);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle vadd$MH() {
-        return RuntimeHelper.requireNonNull(constants$6.const$4,"vadd");
+
+    private static class vadd {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("vadd");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void vadd(idxint n, pfloat* x, pfloat* y);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void vadd(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static FunctionDescriptor vadd$descriptor() {
+        return vadd.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void vadd(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MethodHandle vadd$handle() {
+        return vadd.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void vadd(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MemorySegment vadd$address() {
+        return vadd.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void vadd(idxint n, pfloat *x, pfloat *y)
      * }
      */
     public static void vadd(long n, MemorySegment x, MemorySegment y) {
-        var mh$ = vadd$MH();
+        var mh$ = vadd.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("vadd", n, x, y);
+            }
             mh$.invokeExact(n, x, y);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle vsubscale$MH() {
-        return RuntimeHelper.requireNonNull(constants$6.const$6,"vsubscale");
+
+    private static class vsubscale {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("vsubscale");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void vsubscale(idxint n, pfloat a, pfloat* x, pfloat* y);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void vsubscale(idxint n, pfloat a, pfloat *x, pfloat *y)
+     * }
+     */
+    public static FunctionDescriptor vsubscale$descriptor() {
+        return vsubscale.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void vsubscale(idxint n, pfloat a, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MethodHandle vsubscale$handle() {
+        return vsubscale.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void vsubscale(idxint n, pfloat a, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MemorySegment vsubscale$address() {
+        return vsubscale.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void vsubscale(idxint n, pfloat a, pfloat *x, pfloat *y)
      * }
      */
     public static void vsubscale(long n, double a, MemorySegment x, MemorySegment y) {
-        var mh$ = vsubscale$MH();
+        var mh$ = vsubscale.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("vsubscale", n, a, x, y);
+            }
             mh$.invokeExact(n, a, x, y);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle norm2$MH() {
-        return RuntimeHelper.requireNonNull(constants$7.const$1,"norm2");
+
+    private static class norm2 {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("norm2");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat norm2(pfloat* v, idxint n);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat norm2(pfloat *v, idxint n)
+     * }
+     */
+    public static FunctionDescriptor norm2$descriptor() {
+        return norm2.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat norm2(pfloat *v, idxint n)
+     * }
+     */
+    public static MethodHandle norm2$handle() {
+        return norm2.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat norm2(pfloat *v, idxint n)
+     * }
+     */
+    public static MemorySegment norm2$address() {
+        return norm2.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat norm2(pfloat *v, idxint n)
      * }
      */
     public static double norm2(MemorySegment v, long n) {
-        var mh$ = norm2$MH();
+        var mh$ = norm2.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("norm2", v, n);
+            }
             return (double)mh$.invokeExact(v, n);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle norminf$MH() {
-        return RuntimeHelper.requireNonNull(constants$7.const$2,"norminf");
+
+    private static class norminf {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("norminf");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat norminf(pfloat* v, idxint n);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat norminf(pfloat *v, idxint n)
+     * }
+     */
+    public static FunctionDescriptor norminf$descriptor() {
+        return norminf.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat norminf(pfloat *v, idxint n)
+     * }
+     */
+    public static MethodHandle norminf$handle() {
+        return norminf.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat norminf(pfloat *v, idxint n)
+     * }
+     */
+    public static MemorySegment norminf$address() {
+        return norminf.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat norminf(pfloat *v, idxint n)
      * }
      */
     public static double norminf(MemorySegment v, long n) {
-        var mh$ = norminf$MH();
+        var mh$ = norminf.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("norminf", v, n);
+            }
             return (double)mh$.invokeExact(v, n);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle eddot$MH() {
-        return RuntimeHelper.requireNonNull(constants$7.const$4,"eddot");
+
+    private static class eddot {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("eddot");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat eddot(idxint n, pfloat* x, pfloat* y);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat eddot(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static FunctionDescriptor eddot$descriptor() {
+        return eddot.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat eddot(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MethodHandle eddot$handle() {
+        return eddot.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat eddot(idxint n, pfloat *x, pfloat *y)
+     * }
+     */
+    public static MemorySegment eddot$address() {
+        return eddot.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat eddot(idxint n, pfloat *x, pfloat *y)
      * }
      */
     public static double eddot(long n, MemorySegment x, MemorySegment y) {
-        var mh$ = eddot$MH();
+        var mh$ = eddot.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("eddot", n, x, y);
+            }
             return (double)mh$.invokeExact(n, x, y);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle wrightOmega$MH() {
-        return RuntimeHelper.requireNonNull(constants$7.const$6,"wrightOmega");
+
+    private static class wrightOmega {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("wrightOmega");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat wrightOmega(pfloat z);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat wrightOmega(pfloat z)
+     * }
+     */
+    public static FunctionDescriptor wrightOmega$descriptor() {
+        return wrightOmega.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat wrightOmega(pfloat z)
+     * }
+     */
+    public static MethodHandle wrightOmega$handle() {
+        return wrightOmega.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat wrightOmega(pfloat z)
+     * }
+     */
+    public static MemorySegment wrightOmega$address() {
+        return wrightOmega.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat wrightOmega(pfloat z)
      * }
      */
     public static double wrightOmega(double z) {
-        var mh$ = wrightOmega$MH();
+        var mh$ = wrightOmega.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("wrightOmega", z);
+            }
             return (double)mh$.invokeExact(z);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalExpHessian$MH() {
-        return RuntimeHelper.requireNonNull(constants$8.const$2,"evalExpHessian");
+
+    private static class evalExpHessian {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalExpHessian");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void evalExpHessian(pfloat* w, pfloat* v, pfloat mu);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void evalExpHessian(pfloat *w, pfloat *v, pfloat mu)
+     * }
+     */
+    public static FunctionDescriptor evalExpHessian$descriptor() {
+        return evalExpHessian.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void evalExpHessian(pfloat *w, pfloat *v, pfloat mu)
+     * }
+     */
+    public static MethodHandle evalExpHessian$handle() {
+        return evalExpHessian.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void evalExpHessian(pfloat *w, pfloat *v, pfloat mu)
+     * }
+     */
+    public static MemorySegment evalExpHessian$address() {
+        return evalExpHessian.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void evalExpHessian(pfloat *w, pfloat *v, pfloat mu)
      * }
      */
     public static void evalExpHessian(MemorySegment w, MemorySegment v, double mu) {
-        var mh$ = evalExpHessian$MH();
+        var mh$ = evalExpHessian.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalExpHessian", w, v, mu);
+            }
             mh$.invokeExact(w, v, mu);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalExpGradient$MH() {
-        return RuntimeHelper.requireNonNull(constants$8.const$4,"evalExpGradient");
+
+    private static class evalExpGradient {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalExpGradient");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void evalExpGradient(pfloat* w, pfloat* g);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void evalExpGradient(pfloat *w, pfloat *g)
+     * }
+     */
+    public static FunctionDescriptor evalExpGradient$descriptor() {
+        return evalExpGradient.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void evalExpGradient(pfloat *w, pfloat *g)
+     * }
+     */
+    public static MethodHandle evalExpGradient$handle() {
+        return evalExpGradient.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void evalExpGradient(pfloat *w, pfloat *g)
+     * }
+     */
+    public static MemorySegment evalExpGradient$address() {
+        return evalExpGradient.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void evalExpGradient(pfloat *w, pfloat *g)
      * }
      */
     public static void evalExpGradient(MemorySegment w, MemorySegment g) {
-        var mh$ = evalExpGradient$MH();
+        var mh$ = evalExpGradient.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalExpGradient", w, g);
+            }
             mh$.invokeExact(w, g);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalBarrierValue$MH() {
-        return RuntimeHelper.requireNonNull(constants$8.const$6,"evalBarrierValue");
+
+    private static class evalBarrierValue {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalBarrierValue");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat evalBarrierValue(pfloat* siter, pfloat* ziter, idxint fc, idxint nexc);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat evalBarrierValue(pfloat *siter, pfloat *ziter, idxint fc, idxint nexc)
+     * }
+     */
+    public static FunctionDescriptor evalBarrierValue$descriptor() {
+        return evalBarrierValue.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat evalBarrierValue(pfloat *siter, pfloat *ziter, idxint fc, idxint nexc)
+     * }
+     */
+    public static MethodHandle evalBarrierValue$handle() {
+        return evalBarrierValue.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat evalBarrierValue(pfloat *siter, pfloat *ziter, idxint fc, idxint nexc)
+     * }
+     */
+    public static MemorySegment evalBarrierValue$address() {
+        return evalBarrierValue.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat evalBarrierValue(pfloat *siter, pfloat *ziter, idxint fc, idxint nexc)
      * }
      */
     public static double evalBarrierValue(MemorySegment siter, MemorySegment ziter, long fc, long nexc) {
-        var mh$ = evalBarrierValue$MH();
+        var mh$ = evalBarrierValue.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalBarrierValue", siter, ziter, fc, nexc);
+            }
             return (double)mh$.invokeExact(siter, ziter, fc, nexc);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle scaleToAddExpcone$MH() {
-        return RuntimeHelper.requireNonNull(constants$9.const$0,"scaleToAddExpcone");
+
+    private static class scaleToAddExpcone {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("scaleToAddExpcone");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void scaleToAddExpcone(pfloat* y, pfloat* x, expcone* expcones, idxint nexc, idxint fc);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void scaleToAddExpcone(pfloat *y, pfloat *x, expcone *expcones, idxint nexc, idxint fc)
+     * }
+     */
+    public static FunctionDescriptor scaleToAddExpcone$descriptor() {
+        return scaleToAddExpcone.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void scaleToAddExpcone(pfloat *y, pfloat *x, expcone *expcones, idxint nexc, idxint fc)
+     * }
+     */
+    public static MethodHandle scaleToAddExpcone$handle() {
+        return scaleToAddExpcone.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void scaleToAddExpcone(pfloat *y, pfloat *x, expcone *expcones, idxint nexc, idxint fc)
+     * }
+     */
+    public static MemorySegment scaleToAddExpcone$address() {
+        return scaleToAddExpcone.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void scaleToAddExpcone(pfloat *y, pfloat *x, expcone *expcones, idxint nexc, idxint fc)
      * }
      */
     public static void scaleToAddExpcone(MemorySegment y, MemorySegment x, MemorySegment expcones, long nexc, long fc) {
-        var mh$ = scaleToAddExpcone$MH();
+        var mh$ = scaleToAddExpcone.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("scaleToAddExpcone", y, x, expcones, nexc, fc);
+            }
             mh$.invokeExact(y, x, expcones, nexc, fc);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalExpPrimalFeas$MH() {
-        return RuntimeHelper.requireNonNull(constants$9.const$2,"evalExpPrimalFeas");
+
+    private static class evalExpPrimalFeas {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalExpPrimalFeas");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint evalExpPrimalFeas(pfloat* s, idxint nexc);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint evalExpPrimalFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static FunctionDescriptor evalExpPrimalFeas$descriptor() {
+        return evalExpPrimalFeas.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint evalExpPrimalFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static MethodHandle evalExpPrimalFeas$handle() {
+        return evalExpPrimalFeas.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint evalExpPrimalFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static MemorySegment evalExpPrimalFeas$address() {
+        return evalExpPrimalFeas.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint evalExpPrimalFeas(pfloat *s, idxint nexc)
      * }
      */
     public static long evalExpPrimalFeas(MemorySegment s, long nexc) {
-        var mh$ = evalExpPrimalFeas$MH();
+        var mh$ = evalExpPrimalFeas.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalExpPrimalFeas", s, nexc);
+            }
             return (long)mh$.invokeExact(s, nexc);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalExpDualFeas$MH() {
-        return RuntimeHelper.requireNonNull(constants$9.const$3,"evalExpDualFeas");
+
+    private static class evalExpDualFeas {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalExpDualFeas");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint evalExpDualFeas(pfloat* s, idxint nexc);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint evalExpDualFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static FunctionDescriptor evalExpDualFeas$descriptor() {
+        return evalExpDualFeas.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint evalExpDualFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static MethodHandle evalExpDualFeas$handle() {
+        return evalExpDualFeas.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint evalExpDualFeas(pfloat *s, idxint nexc)
+     * }
+     */
+    public static MemorySegment evalExpDualFeas$address() {
+        return evalExpDualFeas.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint evalExpDualFeas(pfloat *s, idxint nexc)
      * }
      */
     public static long evalExpDualFeas(MemorySegment s, long nexc) {
-        var mh$ = evalExpDualFeas$MH();
+        var mh$ = evalExpDualFeas.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalExpDualFeas", s, nexc);
+            }
             return (long)mh$.invokeExact(s, nexc);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle bring2cone$MH() {
-        return RuntimeHelper.requireNonNull(constants$14.const$1,"bring2cone");
+
+    private static class bring2cone {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("bring2cone");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void bring2cone(cone* C, pfloat* r, pfloat* s);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void bring2cone(cone *C, pfloat *r, pfloat *s)
+     * }
+     */
+    public static FunctionDescriptor bring2cone$descriptor() {
+        return bring2cone.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void bring2cone(cone *C, pfloat *r, pfloat *s)
+     * }
+     */
+    public static MethodHandle bring2cone$handle() {
+        return bring2cone.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void bring2cone(cone *C, pfloat *r, pfloat *s)
+     * }
+     */
+    public static MemorySegment bring2cone$address() {
+        return bring2cone.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void bring2cone(cone *C, pfloat *r, pfloat *s)
      * }
      */
     public static void bring2cone(MemorySegment C, MemorySegment r, MemorySegment s) {
-        var mh$ = bring2cone$MH();
+        var mh$ = bring2cone.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("bring2cone", C, r, s);
+            }
             mh$.invokeExact(C, r, s);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle unitInitialization$MH() {
-        return RuntimeHelper.requireNonNull(constants$14.const$3,"unitInitialization");
+
+    private static class unitInitialization {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("unitInitialization");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void unitInitialization(cone* C, pfloat* s, pfloat* z, pfloat scaling);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void unitInitialization(cone *C, pfloat *s, pfloat *z, pfloat scaling)
+     * }
+     */
+    public static FunctionDescriptor unitInitialization$descriptor() {
+        return unitInitialization.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void unitInitialization(cone *C, pfloat *s, pfloat *z, pfloat scaling)
+     * }
+     */
+    public static MethodHandle unitInitialization$handle() {
+        return unitInitialization.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void unitInitialization(cone *C, pfloat *s, pfloat *z, pfloat scaling)
+     * }
+     */
+    public static MemorySegment unitInitialization$address() {
+        return unitInitialization.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void unitInitialization(cone *C, pfloat *s, pfloat *z, pfloat scaling)
      * }
      */
     public static void unitInitialization(MemorySegment C, MemorySegment s, MemorySegment z, double scaling) {
-        var mh$ = unitInitialization$MH();
+        var mh$ = unitInitialization.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("unitInitialization", C, s, z, scaling);
+            }
             mh$.invokeExact(C, s, z, scaling);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle updateScalings$MH() {
-        return RuntimeHelper.requireNonNull(constants$14.const$5,"updateScalings");
+
+    private static class updateScalings {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("updateScalings");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint updateScalings(cone* C, pfloat* s, pfloat* z, pfloat* lambda, pfloat mu);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint updateScalings(cone *C, pfloat *s, pfloat *z, pfloat *lambda, pfloat mu)
+     * }
+     */
+    public static FunctionDescriptor updateScalings$descriptor() {
+        return updateScalings.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint updateScalings(cone *C, pfloat *s, pfloat *z, pfloat *lambda, pfloat mu)
+     * }
+     */
+    public static MethodHandle updateScalings$handle() {
+        return updateScalings.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint updateScalings(cone *C, pfloat *s, pfloat *z, pfloat *lambda, pfloat mu)
+     * }
+     */
+    public static MemorySegment updateScalings$address() {
+        return updateScalings.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint updateScalings(cone *C, pfloat *s, pfloat *z, pfloat *lambda, pfloat mu)
      * }
      */
     public static long updateScalings(MemorySegment C, MemorySegment s, MemorySegment z, MemorySegment lambda, double mu) {
-        var mh$ = updateScalings$MH();
+        var mh$ = updateScalings.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("updateScalings", C, s, z, lambda, mu);
+            }
             return (long)mh$.invokeExact(C, s, z, lambda, mu);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle evalSymmetricBarrierValue$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.const$1,"evalSymmetricBarrierValue");
+
+    private static class evalSymmetricBarrierValue {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("evalSymmetricBarrierValue");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat evalSymmetricBarrierValue(pfloat* siter, pfloat* ziter, pfloat tauIter, pfloat kapIter, cone* C, pfloat D);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat evalSymmetricBarrierValue(pfloat *siter, pfloat *ziter, pfloat tauIter, pfloat kapIter, cone *C, pfloat D)
+     * }
+     */
+    public static FunctionDescriptor evalSymmetricBarrierValue$descriptor() {
+        return evalSymmetricBarrierValue.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat evalSymmetricBarrierValue(pfloat *siter, pfloat *ziter, pfloat tauIter, pfloat kapIter, cone *C, pfloat D)
+     * }
+     */
+    public static MethodHandle evalSymmetricBarrierValue$handle() {
+        return evalSymmetricBarrierValue.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat evalSymmetricBarrierValue(pfloat *siter, pfloat *ziter, pfloat tauIter, pfloat kapIter, cone *C, pfloat D)
+     * }
+     */
+    public static MemorySegment evalSymmetricBarrierValue$address() {
+        return evalSymmetricBarrierValue.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat evalSymmetricBarrierValue(pfloat *siter, pfloat *ziter, pfloat tauIter, pfloat kapIter, cone *C, pfloat D)
      * }
      */
     public static double evalSymmetricBarrierValue(MemorySegment siter, MemorySegment ziter, double tauIter, double kapIter, MemorySegment C, double D) {
-        var mh$ = evalSymmetricBarrierValue$MH();
+        var mh$ = evalSymmetricBarrierValue.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("evalSymmetricBarrierValue", siter, ziter, tauIter, kapIter, C, D);
+            }
             return (double)mh$.invokeExact(siter, ziter, tauIter, kapIter, C, D);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle scale$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.const$2,"scale");
+
+    private static class scale {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("scale");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void scale(pfloat* z, cone* C, pfloat* lambda);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void scale(pfloat *z, cone *C, pfloat *lambda)
+     * }
+     */
+    public static FunctionDescriptor scale$descriptor() {
+        return scale.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void scale(pfloat *z, cone *C, pfloat *lambda)
+     * }
+     */
+    public static MethodHandle scale$handle() {
+        return scale.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void scale(pfloat *z, cone *C, pfloat *lambda)
+     * }
+     */
+    public static MemorySegment scale$address() {
+        return scale.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void scale(pfloat *z, cone *C, pfloat *lambda)
      * }
      */
     public static void scale(MemorySegment z, MemorySegment C, MemorySegment lambda) {
-        var mh$ = scale$MH();
+        var mh$ = scale.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("scale", z, C, lambda);
+            }
             mh$.invokeExact(z, C, lambda);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle scale2add$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.const$3,"scale2add");
+
+    private static class scale2add {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("scale2add");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void scale2add(pfloat* x, pfloat* y, cone* C);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void scale2add(pfloat *x, pfloat *y, cone *C)
+     * }
+     */
+    public static FunctionDescriptor scale2add$descriptor() {
+        return scale2add.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void scale2add(pfloat *x, pfloat *y, cone *C)
+     * }
+     */
+    public static MethodHandle scale2add$handle() {
+        return scale2add.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void scale2add(pfloat *x, pfloat *y, cone *C)
+     * }
+     */
+    public static MemorySegment scale2add$address() {
+        return scale2add.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void scale2add(pfloat *x, pfloat *y, cone *C)
      * }
      */
     public static void scale2add(MemorySegment x, MemorySegment y, MemorySegment C) {
-        var mh$ = scale2add$MH();
+        var mh$ = scale2add.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("scale2add", x, y, C);
+            }
             mh$.invokeExact(x, y, C);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle unscale$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.const$4,"unscale");
+
+    private static class unscale {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("unscale");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void unscale(pfloat* lambda, cone* C, pfloat* z);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void unscale(pfloat *lambda, cone *C, pfloat *z)
+     * }
+     */
+    public static FunctionDescriptor unscale$descriptor() {
+        return unscale.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void unscale(pfloat *lambda, cone *C, pfloat *z)
+     * }
+     */
+    public static MethodHandle unscale$handle() {
+        return unscale.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void unscale(pfloat *lambda, cone *C, pfloat *z)
+     * }
+     */
+    public static MemorySegment unscale$address() {
+        return unscale.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void unscale(pfloat *lambda, cone *C, pfloat *z)
      * }
      */
     public static void unscale(MemorySegment lambda, MemorySegment C, MemorySegment z) {
-        var mh$ = unscale$MH();
+        var mh$ = unscale.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("unscale", lambda, C, z);
+            }
             mh$.invokeExact(lambda, C, z);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle conicProduct$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.const$6,"conicProduct");
+
+    private static class conicProduct {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("conicProduct");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat conicProduct(pfloat* u, pfloat* v, cone* C, pfloat* w);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat conicProduct(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static FunctionDescriptor conicProduct$descriptor() {
+        return conicProduct.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat conicProduct(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static MethodHandle conicProduct$handle() {
+        return conicProduct.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat conicProduct(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static MemorySegment conicProduct$address() {
+        return conicProduct.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat conicProduct(pfloat *u, pfloat *v, cone *C, pfloat *w)
      * }
      */
     public static double conicProduct(MemorySegment u, MemorySegment v, MemorySegment C, MemorySegment w) {
-        var mh$ = conicProduct$MH();
+        var mh$ = conicProduct.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("conicProduct", u, v, C, w);
+            }
             return (double)mh$.invokeExact(u, v, C, w);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle conicDivision$MH() {
-        return RuntimeHelper.requireNonNull(constants$16.const$1,"conicDivision");
+
+    private static class conicDivision {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("conicDivision");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void conicDivision(pfloat* u, pfloat* v, cone* C, pfloat* w);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void conicDivision(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static FunctionDescriptor conicDivision$descriptor() {
+        return conicDivision.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void conicDivision(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static MethodHandle conicDivision$handle() {
+        return conicDivision.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void conicDivision(pfloat *u, pfloat *v, cone *C, pfloat *w)
+     * }
+     */
+    public static MemorySegment conicDivision$address() {
+        return conicDivision.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void conicDivision(pfloat *u, pfloat *v, cone *C, pfloat *w)
      * }
      */
     public static void conicDivision(MemorySegment u, MemorySegment v, MemorySegment C, MemorySegment w) {
-        var mh$ = conicDivision$MH();
+        var mh$ = conicDivision.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("conicDivision", u, v, C, w);
+            }
             mh$.invokeExact(u, v, C, w);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle getSOCDetails$MH() {
-        return RuntimeHelper.requireNonNull(constants$16.const$3,"getSOCDetails");
+
+    private static class getSOCDetails {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("getSOCDetails");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void getSOCDetails(socone* soc, idxint* conesize, pfloat* eta_square, pfloat* d1, pfloat* u0, pfloat* u1, pfloat* v1, pfloat** q);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void getSOCDetails(socone *soc, idxint *conesize, pfloat *eta_square, pfloat *d1, pfloat *u0, pfloat *u1, pfloat *v1, pfloat **q)
+     * }
+     */
+    public static FunctionDescriptor getSOCDetails$descriptor() {
+        return getSOCDetails.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void getSOCDetails(socone *soc, idxint *conesize, pfloat *eta_square, pfloat *d1, pfloat *u0, pfloat *u1, pfloat *v1, pfloat **q)
+     * }
+     */
+    public static MethodHandle getSOCDetails$handle() {
+        return getSOCDetails.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void getSOCDetails(socone *soc, idxint *conesize, pfloat *eta_square, pfloat *d1, pfloat *u0, pfloat *u1, pfloat *v1, pfloat **q)
+     * }
+     */
+    public static MemorySegment getSOCDetails$address() {
+        return getSOCDetails.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void getSOCDetails(socone *soc, idxint *conesize, pfloat *eta_square, pfloat *d1, pfloat *u0, pfloat *u1, pfloat *v1, pfloat **q)
      * }
      */
     public static void getSOCDetails(MemorySegment soc, MemorySegment conesize, MemorySegment eta_square, MemorySegment d1, MemorySegment u0, MemorySegment u1, MemorySegment v1, MemorySegment q) {
-        var mh$ = getSOCDetails$MH();
+        var mh$ = getSOCDetails.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("getSOCDetails", soc, conesize, eta_square, d1, u0, u1, v1, q);
+            }
             mh$.invokeExact(soc, conesize, eta_square, d1, u0, u1, v1, q);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle unstretch$MH() {
-        return RuntimeHelper.requireNonNull(constants$16.const$5,"unstretch");
+
+    private static class unstretch {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("unstretch");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void unstretch(idxint n, idxint p, cone* C, idxint* Pinv, pfloat* Px, pfloat* dx, pfloat* dy, pfloat* dz);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void unstretch(idxint n, idxint p, cone *C, idxint *Pinv, pfloat *Px, pfloat *dx, pfloat *dy, pfloat *dz)
+     * }
+     */
+    public static FunctionDescriptor unstretch$descriptor() {
+        return unstretch.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void unstretch(idxint n, idxint p, cone *C, idxint *Pinv, pfloat *Px, pfloat *dx, pfloat *dy, pfloat *dz)
+     * }
+     */
+    public static MethodHandle unstretch$handle() {
+        return unstretch.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void unstretch(idxint n, idxint p, cone *C, idxint *Pinv, pfloat *Px, pfloat *dx, pfloat *dy, pfloat *dz)
+     * }
+     */
+    public static MemorySegment unstretch$address() {
+        return unstretch.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void unstretch(idxint n, idxint p, cone *C, idxint *Pinv, pfloat *Px, pfloat *dx, pfloat *dy, pfloat *dz)
      * }
      */
     public static void unstretch(long n, long p, MemorySegment C, MemorySegment Pinv, MemorySegment Px, MemorySegment dx, MemorySegment dy, MemorySegment dz) {
-        var mh$ = unstretch$MH();
+        var mh$ = unstretch.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("unstretch", n, p, C, Pinv, Px, dx, dy, dz);
+            }
             mh$.invokeExact(n, p, C, Pinv, Px, dx, dy, dz);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle kkt_factor$MH() {
-        return RuntimeHelper.requireNonNull(constants$21.const$4,"kkt_factor");
+
+    private static class kkt_factor {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("kkt_factor");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint kkt_factor(kkt* KKT, pfloat eps, pfloat delta);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint kkt_factor(kkt *KKT, pfloat eps, pfloat delta)
+     * }
+     */
+    public static FunctionDescriptor kkt_factor$descriptor() {
+        return kkt_factor.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint kkt_factor(kkt *KKT, pfloat eps, pfloat delta)
+     * }
+     */
+    public static MethodHandle kkt_factor$handle() {
+        return kkt_factor.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint kkt_factor(kkt *KKT, pfloat eps, pfloat delta)
+     * }
+     */
+    public static MemorySegment kkt_factor$address() {
+        return kkt_factor.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint kkt_factor(kkt *KKT, pfloat eps, pfloat delta)
      * }
      */
     public static long kkt_factor(MemorySegment KKT, double eps, double delta) {
-        var mh$ = kkt_factor$MH();
+        var mh$ = kkt_factor.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("kkt_factor", KKT, eps, delta);
+            }
             return (long)mh$.invokeExact(KKT, eps, delta);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle kkt_solve$MH() {
-        return RuntimeHelper.requireNonNull(constants$21.const$6,"kkt_solve");
+
+    private static class kkt_solve {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("kkt_solve");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint kkt_solve(kkt* KKT, spmat* A, spmat* G, pfloat* Pb, pfloat* dx, pfloat* dy, pfloat* dz, idxint n, idxint p, idxint m, cone* C, idxint isinit, idxint nitref);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint kkt_solve(kkt *KKT, spmat *A, spmat *G, pfloat *Pb, pfloat *dx, pfloat *dy, pfloat *dz, idxint n, idxint p, idxint m, cone *C, idxint isinit, idxint nitref)
+     * }
+     */
+    public static FunctionDescriptor kkt_solve$descriptor() {
+        return kkt_solve.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint kkt_solve(kkt *KKT, spmat *A, spmat *G, pfloat *Pb, pfloat *dx, pfloat *dy, pfloat *dz, idxint n, idxint p, idxint m, cone *C, idxint isinit, idxint nitref)
+     * }
+     */
+    public static MethodHandle kkt_solve$handle() {
+        return kkt_solve.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint kkt_solve(kkt *KKT, spmat *A, spmat *G, pfloat *Pb, pfloat *dx, pfloat *dy, pfloat *dz, idxint n, idxint p, idxint m, cone *C, idxint isinit, idxint nitref)
+     * }
+     */
+    public static MemorySegment kkt_solve$address() {
+        return kkt_solve.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint kkt_solve(kkt *KKT, spmat *A, spmat *G, pfloat *Pb, pfloat *dx, pfloat *dy, pfloat *dz, idxint n, idxint p, idxint m, cone *C, idxint isinit, idxint nitref)
      * }
      */
     public static long kkt_solve(MemorySegment KKT, MemorySegment A, MemorySegment G, MemorySegment Pb, MemorySegment dx, MemorySegment dy, MemorySegment dz, long n, long p, long m, MemorySegment C, long isinit, long nitref) {
-        var mh$ = kkt_solve$MH();
+        var mh$ = kkt_solve.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("kkt_solve", KKT, A, G, Pb, dx, dy, dz, n, p, m, C, isinit, nitref);
+            }
             return (long)mh$.invokeExact(KKT, A, G, Pb, dx, dy, dz, n, p, m, C, isinit, nitref);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle kkt_update$MH() {
-        return RuntimeHelper.requireNonNull(constants$22.const$0,"kkt_update");
+
+    private static class kkt_update {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("kkt_update");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void kkt_update(spmat* PKP, idxint* P, cone* C);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void kkt_update(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static FunctionDescriptor kkt_update$descriptor() {
+        return kkt_update.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void kkt_update(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static MethodHandle kkt_update$handle() {
+        return kkt_update.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void kkt_update(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static MemorySegment kkt_update$address() {
+        return kkt_update.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void kkt_update(spmat *PKP, idxint *P, cone *C)
      * }
      */
     public static void kkt_update(MemorySegment PKP, MemorySegment P, MemorySegment C) {
-        var mh$ = kkt_update$MH();
+        var mh$ = kkt_update.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("kkt_update", PKP, P, C);
+            }
             mh$.invokeExact(PKP, P, C);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle kkt_init$MH() {
-        return RuntimeHelper.requireNonNull(constants$22.const$1,"kkt_init");
+
+    private static class kkt_init {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("kkt_init");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void kkt_init(spmat* PKP, idxint* P, cone* C);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void kkt_init(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static FunctionDescriptor kkt_init$descriptor() {
+        return kkt_init.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void kkt_init(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static MethodHandle kkt_init$handle() {
+        return kkt_init.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void kkt_init(spmat *PKP, idxint *P, cone *C)
+     * }
+     */
+    public static MemorySegment kkt_init$address() {
+        return kkt_init.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void kkt_init(spmat *PKP, idxint *P, cone *C)
      * }
      */
     public static void kkt_init(MemorySegment PKP, MemorySegment P, MemorySegment C) {
-        var mh$ = kkt_init$MH();
+        var mh$ = kkt_init.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("kkt_init", PKP, P, C);
+            }
             mh$.invokeExact(PKP, P, C);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle tic$MH() {
-        return RuntimeHelper.requireNonNull(constants$23.const$0,"tic");
+
+    private static class ECOS_setup {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ECOS_setup");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void tic(timer* t);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pwork *ECOS_setup(idxint n, idxint m, idxint p, idxint l, idxint ncones, idxint *q, idxint nex, pfloat *Gpr, idxint *Gjc, idxint *Gir, pfloat *Apr, idxint *Ajc, idxint *Air, pfloat *c, pfloat *h, pfloat *b)
      * }
      */
-    public static void tic(MemorySegment t) {
-        var mh$ = tic$MH();
-        try {
-            mh$.invokeExact(t);
-        } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
-        }
+    public static FunctionDescriptor ECOS_setup$descriptor() {
+        return ECOS_setup.DESC;
     }
-    public static MethodHandle toc$MH() {
-        return RuntimeHelper.requireNonNull(constants$23.const$1,"toc");
-    }
+
     /**
-     * {@snippet :
-     * pfloat toc(timer* t);
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pwork *ECOS_setup(idxint n, idxint m, idxint p, idxint l, idxint ncones, idxint *q, idxint nex, pfloat *Gpr, idxint *Gjc, idxint *Gir, pfloat *Apr, idxint *Ajc, idxint *Air, pfloat *c, pfloat *h, pfloat *b)
      * }
      */
-    public static double toc(MemorySegment t) {
-        var mh$ = toc$MH();
-        try {
-            return (double)mh$.invokeExact(t);
-        } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
-        }
+    public static MethodHandle ECOS_setup$handle() {
+        return ECOS_setup.HANDLE;
     }
-    public static MethodHandle ECOS_setup$MH() {
-        return RuntimeHelper.requireNonNull(constants$41.const$1,"ECOS_setup");
-    }
+
     /**
-     * {@snippet :
-     * pwork* ECOS_setup(idxint n, idxint m, idxint p, idxint l, idxint ncones, idxint* q, idxint nex, pfloat* Gpr, idxint* Gjc, idxint* Gir, pfloat* Apr, idxint* Ajc, idxint* Air, pfloat* c, pfloat* h, pfloat* b);
+     * Address for:
+     * {@snippet lang=c :
+     * pwork *ECOS_setup(idxint n, idxint m, idxint p, idxint l, idxint ncones, idxint *q, idxint nex, pfloat *Gpr, idxint *Gjc, idxint *Gir, pfloat *Apr, idxint *Ajc, idxint *Air, pfloat *c, pfloat *h, pfloat *b)
+     * }
+     */
+    public static MemorySegment ECOS_setup$address() {
+        return ECOS_setup.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pwork *ECOS_setup(idxint n, idxint m, idxint p, idxint l, idxint ncones, idxint *q, idxint nex, pfloat *Gpr, idxint *Gjc, idxint *Gir, pfloat *Apr, idxint *Ajc, idxint *Air, pfloat *c, pfloat *h, pfloat *b)
      * }
      */
     public static MemorySegment ECOS_setup(long n, long m, long p, long l, long ncones, MemorySegment q, long nex, MemorySegment Gpr, MemorySegment Gjc, MemorySegment Gir, MemorySegment Apr, MemorySegment Ajc, MemorySegment Air, MemorySegment c, MemorySegment h, MemorySegment b) {
-        var mh$ = ECOS_setup$MH();
+        var mh$ = ECOS_setup.HANDLE;
         try {
-            return (java.lang.foreign.MemorySegment)mh$.invokeExact(n, m, p, l, ncones, q, nex, Gpr, Gjc, Gir, Apr, Ajc, Air, c, h, b);
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ECOS_setup", n, m, p, l, ncones, q, nex, Gpr, Gjc, Gir, Apr, Ajc, Air, c, h, b);
+            }
+            return (MemorySegment)mh$.invokeExact(n, m, p, l, ncones, q, nex, Gpr, Gjc, Gir, Apr, Ajc, Air, c, h, b);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle expConeLineSearch$MH() {
-        return RuntimeHelper.requireNonNull(constants$41.const$3,"expConeLineSearch");
+
+    private static class expConeLineSearch {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_DOUBLE,
+            ecos_h.C_POINTER,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_DOUBLE,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("expConeLineSearch");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * pfloat expConeLineSearch(pwork* w, pfloat dtau, pfloat dkappa, idxint affine);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * pfloat expConeLineSearch(pwork *w, pfloat dtau, pfloat dkappa, idxint affine)
+     * }
+     */
+    public static FunctionDescriptor expConeLineSearch$descriptor() {
+        return expConeLineSearch.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * pfloat expConeLineSearch(pwork *w, pfloat dtau, pfloat dkappa, idxint affine)
+     * }
+     */
+    public static MethodHandle expConeLineSearch$handle() {
+        return expConeLineSearch.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * pfloat expConeLineSearch(pwork *w, pfloat dtau, pfloat dkappa, idxint affine)
+     * }
+     */
+    public static MemorySegment expConeLineSearch$address() {
+        return expConeLineSearch.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * pfloat expConeLineSearch(pwork *w, pfloat dtau, pfloat dkappa, idxint affine)
      * }
      */
     public static double expConeLineSearch(MemorySegment w, double dtau, double dkappa, long affine) {
-        var mh$ = expConeLineSearch$MH();
+        var mh$ = expConeLineSearch.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("expConeLineSearch", w, dtau, dkappa, affine);
+            }
             return (double)mh$.invokeExact(w, dtau, dkappa, affine);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ECOS_solve$MH() {
-        return RuntimeHelper.requireNonNull(constants$41.const$5,"ECOS_solve");
+
+    private static class ECOS_solve {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ECOS_solve");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * idxint ECOS_solve(pwork* w);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * idxint ECOS_solve(pwork *w)
+     * }
+     */
+    public static FunctionDescriptor ECOS_solve$descriptor() {
+        return ECOS_solve.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * idxint ECOS_solve(pwork *w)
+     * }
+     */
+    public static MethodHandle ECOS_solve$handle() {
+        return ECOS_solve.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * idxint ECOS_solve(pwork *w)
+     * }
+     */
+    public static MemorySegment ECOS_solve$address() {
+        return ECOS_solve.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * idxint ECOS_solve(pwork *w)
      * }
      */
     public static long ECOS_solve(MemorySegment w) {
-        var mh$ = ECOS_solve$MH();
+        var mh$ = ECOS_solve.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ECOS_solve", w);
+            }
             return (long)mh$.invokeExact(w);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ECOS_cleanup$MH() {
-        return RuntimeHelper.requireNonNull(constants$42.const$1,"ECOS_cleanup");
+
+    private static class ECOS_cleanup {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ECOS_cleanup");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void ECOS_cleanup(pwork* w, idxint keepvars);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void ECOS_cleanup(pwork *w, idxint keepvars)
+     * }
+     */
+    public static FunctionDescriptor ECOS_cleanup$descriptor() {
+        return ECOS_cleanup.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void ECOS_cleanup(pwork *w, idxint keepvars)
+     * }
+     */
+    public static MethodHandle ECOS_cleanup$handle() {
+        return ECOS_cleanup.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void ECOS_cleanup(pwork *w, idxint keepvars)
+     * }
+     */
+    public static MemorySegment ECOS_cleanup$address() {
+        return ECOS_cleanup.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void ECOS_cleanup(pwork *w, idxint keepvars)
      * }
      */
     public static void ECOS_cleanup(MemorySegment w, long keepvars) {
-        var mh$ = ECOS_cleanup$MH();
+        var mh$ = ECOS_cleanup.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ECOS_cleanup", w, keepvars);
+            }
             mh$.invokeExact(w, keepvars);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ECOS_ver$MH() {
-        return RuntimeHelper.requireNonNull(constants$42.const$3,"ECOS_ver");
+
+    private static class ECOS_ver {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
+            ecos_h.C_POINTER    );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ECOS_ver");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * char* ECOS_ver();
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * const char *ECOS_ver()
+     * }
+     */
+    public static FunctionDescriptor ECOS_ver$descriptor() {
+        return ECOS_ver.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * const char *ECOS_ver()
+     * }
+     */
+    public static MethodHandle ECOS_ver$handle() {
+        return ECOS_ver.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * const char *ECOS_ver()
+     * }
+     */
+    public static MemorySegment ECOS_ver$address() {
+        return ECOS_ver.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * const char *ECOS_ver()
      * }
      */
     public static MemorySegment ECOS_ver() {
-        var mh$ = ECOS_ver$MH();
+        var mh$ = ECOS_ver.HANDLE;
         try {
-            return (java.lang.foreign.MemorySegment)mh$.invokeExact();
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ECOS_ver");
+            }
+            return (MemorySegment)mh$.invokeExact();
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ecos_updateDataEntry_h$MH() {
-        return RuntimeHelper.requireNonNull(constants$42.const$5,"ecos_updateDataEntry_h");
+
+    private static class ecos_updateDataEntry_h {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ecos_updateDataEntry_h");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void ecos_updateDataEntry_h(pwork* w, idxint idx, pfloat value);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_h(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static FunctionDescriptor ecos_updateDataEntry_h$descriptor() {
+        return ecos_updateDataEntry_h.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_h(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static MethodHandle ecos_updateDataEntry_h$handle() {
+        return ecos_updateDataEntry_h.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_h(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static MemorySegment ecos_updateDataEntry_h$address() {
+        return ecos_updateDataEntry_h.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_h(pwork *w, idxint idx, pfloat value)
      * }
      */
     public static void ecos_updateDataEntry_h(MemorySegment w, long idx, double value) {
-        var mh$ = ecos_updateDataEntry_h$MH();
+        var mh$ = ecos_updateDataEntry_h.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ecos_updateDataEntry_h", w, idx, value);
+            }
             mh$.invokeExact(w, idx, value);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ecos_updateDataEntry_c$MH() {
-        return RuntimeHelper.requireNonNull(constants$43.const$0,"ecos_updateDataEntry_c");
+
+    private static class ecos_updateDataEntry_c {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_LONG_LONG,
+            ecos_h.C_DOUBLE
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ecos_updateDataEntry_c");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void ecos_updateDataEntry_c(pwork* w, idxint idx, pfloat value);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_c(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static FunctionDescriptor ecos_updateDataEntry_c$descriptor() {
+        return ecos_updateDataEntry_c.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_c(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static MethodHandle ecos_updateDataEntry_c$handle() {
+        return ecos_updateDataEntry_c.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_c(pwork *w, idxint idx, pfloat value)
+     * }
+     */
+    public static MemorySegment ecos_updateDataEntry_c$address() {
+        return ecos_updateDataEntry_c.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void ecos_updateDataEntry_c(pwork *w, idxint idx, pfloat value)
      * }
      */
     public static void ecos_updateDataEntry_c(MemorySegment w, long idx, double value) {
-        var mh$ = ecos_updateDataEntry_c$MH();
+        var mh$ = ecos_updateDataEntry_c.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ecos_updateDataEntry_c", w, idx, value);
+            }
             mh$.invokeExact(w, idx, value);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static MethodHandle ECOS_updateData$MH() {
-        return RuntimeHelper.requireNonNull(constants$43.const$2,"ECOS_updateData");
+
+    private static class ECOS_updateData {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER,
+            ecos_h.C_POINTER
+        );
+
+        public static final MemorySegment ADDR = ecos_h.findOrThrow("ECOS_updateData");
+
+        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
+
     /**
-     * {@snippet :
-     * void ECOS_updateData(pwork* w, pfloat* Gpr, pfloat* Apr, pfloat* c, pfloat* h, pfloat* b);
+     * Function descriptor for:
+     * {@snippet lang=c :
+     * void ECOS_updateData(pwork *w, pfloat *Gpr, pfloat *Apr, pfloat *c, pfloat *h, pfloat *b)
+     * }
+     */
+    public static FunctionDescriptor ECOS_updateData$descriptor() {
+        return ECOS_updateData.DESC;
+    }
+
+    /**
+     * Downcall method handle for:
+     * {@snippet lang=c :
+     * void ECOS_updateData(pwork *w, pfloat *Gpr, pfloat *Apr, pfloat *c, pfloat *h, pfloat *b)
+     * }
+     */
+    public static MethodHandle ECOS_updateData$handle() {
+        return ECOS_updateData.HANDLE;
+    }
+
+    /**
+     * Address for:
+     * {@snippet lang=c :
+     * void ECOS_updateData(pwork *w, pfloat *Gpr, pfloat *Apr, pfloat *c, pfloat *h, pfloat *b)
+     * }
+     */
+    public static MemorySegment ECOS_updateData$address() {
+        return ECOS_updateData.ADDR;
+    }
+
+    /**
+     * {@snippet lang=c :
+     * void ECOS_updateData(pwork *w, pfloat *Gpr, pfloat *Apr, pfloat *c, pfloat *h, pfloat *b)
      * }
      */
     public static void ECOS_updateData(MemorySegment w, MemorySegment Gpr, MemorySegment Apr, MemorySegment c, MemorySegment h, MemorySegment b) {
-        var mh$ = ECOS_updateData$MH();
+        var mh$ = ECOS_updateData.HANDLE;
         try {
+            if (TRACE_DOWNCALLS) {
+                traceDowncall("ECOS_updateData", w, Gpr, Apr, c, h, b);
+            }
             mh$.invokeExact(w, Gpr, Apr, c, h, b);
         } catch (Throwable ex$) {
-            throw new AssertionError("should not reach here", ex$);
+           throw new AssertionError("should not reach here", ex$);
         }
     }
+    private static final int PRINTLEVEL = (int)2L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define PRINTLEVEL 2
      * }
      */
     public static int PRINTLEVEL() {
-        return (int)2L;
+        return PRINTLEVEL;
     }
+    private static final int PROFILING = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define PROFILING 1
      * }
      */
     public static int PROFILING() {
-        return (int)1L;
+        return PROFILING;
     }
+    private static final int DEBUG = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define DEBUG 0
      * }
      */
     public static int DEBUG() {
-        return (int)0L;
+        return DEBUG;
     }
+    private static final double ECOS_INFINITY = Double.valueOf("Infinity");
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_INFINITY Infinity
      * }
      */
     public static double ECOS_INFINITY() {
-        return Double.valueOf("Infinity");
+        return ECOS_INFINITY;
     }
+    private static final double ECOS_NAN = Double.valueOf("NaN");
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_NAN NaN
      * }
      */
     public static double ECOS_NAN() {
-        return Double.valueOf("NaN");
+        return ECOS_NAN;
     }
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SUITESPARSE_DATE "July 17, 2012"
      * }
      */
     public static MemorySegment SUITESPARSE_DATE() {
-        return constants$43.const$3;
+        class Holder {
+            static final MemorySegment SUITESPARSE_DATE
+                = ecos_h.LIBRARY_ARENA.allocateFrom("July 17, 2012");
+        }
+        return Holder.SUITESPARSE_DATE;
     }
+    private static final int SUITESPARSE_VERSION = (int)4000L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SUITESPARSE_VERSION 4000
      * }
      */
     public static int SUITESPARSE_VERSION() {
-        return (int)4000L;
+        return SUITESPARSE_VERSION;
     }
+    private static final int CONEMODE = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define CONEMODE 0
      * }
      */
     public static int CONEMODE() {
-        return (int)0L;
+        return CONEMODE;
     }
+    private static final int INSIDE_CONE = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define INSIDE_CONE 0
      * }
      */
     public static int INSIDE_CONE() {
-        return (int)0L;
+        return INSIDE_CONE;
     }
+    private static final int OUTSIDE_CONE = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define OUTSIDE_CONE 1
      * }
      */
     public static int OUTSIDE_CONE() {
-        return (int)1L;
+        return OUTSIDE_CONE;
     }
+    private static final int KKT_PROBLEM = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define KKT_PROBLEM 0
      * }
      */
     public static int KKT_PROBLEM() {
-        return (int)0L;
+        return KKT_PROBLEM;
     }
+    private static final int KKT_OK = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define KKT_OK 1
      * }
      */
     public static int KKT_OK() {
-        return (int)1L;
+        return KKT_OK;
     }
+    private static final int MAXIT = (int)100L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define MAXIT 100
      * }
      */
     public static int MAXIT() {
-        return (int)100L;
+        return MAXIT;
     }
+    private static final double FEASTOL = 1.0E-8d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define FEASTOL 1.0E-8
      * }
      */
     public static double FEASTOL() {
-        return 1.0E-8d;
+        return FEASTOL;
     }
+    private static final double ABSTOL = 1.0E-8d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ABSTOL 1.0E-8
      * }
      */
     public static double ABSTOL() {
-        return 1.0E-8d;
+        return ABSTOL;
     }
+    private static final double RELTOL = 1.0E-8d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define RELTOL 1.0E-8
      * }
      */
     public static double RELTOL() {
-        return 1.0E-8d;
+        return RELTOL;
     }
+    private static final double FTOL_INACC = 1.0E-4d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define FTOL_INACC 1.0E-4
      * }
      */
     public static double FTOL_INACC() {
-        return 1.0E-4d;
+        return FTOL_INACC;
     }
+    private static final double ATOL_INACC = 5.0E-5d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ATOL_INACC 5.0E-5
      * }
      */
     public static double ATOL_INACC() {
-        return 5.0E-5d;
+        return ATOL_INACC;
     }
+    private static final double RTOL_INACC = 5.0E-5d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define RTOL_INACC 5.0E-5
      * }
      */
     public static double RTOL_INACC() {
-        return 5.0E-5d;
+        return RTOL_INACC;
     }
+    private static final double GAMMA = 0.99d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define GAMMA 0.99
      * }
      */
     public static double GAMMA() {
-        return 0.99d;
+        return GAMMA;
     }
+    private static final int STATICREG = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define STATICREG 1
      * }
      */
     public static int STATICREG() {
-        return (int)1L;
+        return STATICREG;
     }
+    private static final double DELTASTAT = 7.0E-8d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define DELTASTAT 7.0E-8
      * }
      */
     public static double DELTASTAT() {
-        return 7.0E-8d;
+        return DELTASTAT;
     }
+    private static final double DELTA = 2.0E-7d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define DELTA 2.0E-7
      * }
      */
     public static double DELTA() {
-        return 2.0E-7d;
+        return DELTA;
     }
+    private static final double EPS = 1.0E-13d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define EPS 1.0E-13
      * }
      */
     public static double EPS() {
-        return 1.0E-13d;
+        return EPS;
     }
+    private static final int VERBOSE = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define VERBOSE 1
      * }
      */
     public static int VERBOSE() {
-        return (int)1L;
+        return VERBOSE;
     }
+    private static final int NITREF = (int)9L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define NITREF 9
      * }
      */
     public static int NITREF() {
-        return (int)9L;
+        return NITREF;
     }
+    private static final int IRERRFACT = (int)6L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define IRERRFACT 6
      * }
      */
     public static int IRERRFACT() {
-        return (int)6L;
+        return IRERRFACT;
     }
+    private static final double LINSYSACC = 1.0E-14d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define LINSYSACC 1.0E-14
      * }
      */
     public static double LINSYSACC() {
-        return 1.0E-14d;
+        return LINSYSACC;
     }
+    private static final double SIGMAMIN = 1.0E-4d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SIGMAMIN 1.0E-4
      * }
      */
     public static double SIGMAMIN() {
-        return 1.0E-4d;
+        return SIGMAMIN;
     }
+    private static final double SIGMAMAX = 1.0d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SIGMAMAX 1.0
      * }
      */
     public static double SIGMAMAX() {
-        return 1.0d;
+        return SIGMAMAX;
     }
+    private static final double STEPMIN = 1.0E-6d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define STEPMIN 1.0E-6
      * }
      */
     public static double STEPMIN() {
-        return 1.0E-6d;
+        return STEPMIN;
     }
+    private static final double STEPMAX = 0.999d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define STEPMAX 0.999
      * }
      */
     public static double STEPMAX() {
-        return 0.999d;
+        return STEPMAX;
     }
+    private static final int SAFEGUARD = (int)500L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define SAFEGUARD 500
      * }
      */
     public static int SAFEGUARD() {
-        return (int)500L;
+        return SAFEGUARD;
     }
+    private static final int MAX_BK = (int)90L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define MAX_BK 90
      * }
      */
     public static int MAX_BK() {
-        return (int)90L;
+        return MAX_BK;
     }
+    private static final double BK_SCALE = 0.8d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define BK_SCALE 0.8
      * }
      */
     public static double BK_SCALE() {
-        return 0.8d;
+        return BK_SCALE;
     }
+    private static final double MIN_DISTANCE = 0.1d;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define MIN_DISTANCE 0.1
      * }
      */
     public static double MIN_DISTANCE() {
-        return 0.1d;
+        return MIN_DISTANCE;
     }
+    private static final int CENTRALITY = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define CENTRALITY 1
      * }
      */
     public static int CENTRALITY() {
-        return (int)1L;
+        return CENTRALITY;
     }
+    private static final int EQUILIBRATE = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define EQUILIBRATE 1
      * }
      */
     public static int EQUILIBRATE() {
-        return (int)1L;
+        return EQUILIBRATE;
     }
+    private static final int EQUIL_ITERS = (int)3L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define EQUIL_ITERS 3
      * }
      */
     public static int EQUIL_ITERS() {
-        return (int)3L;
+        return EQUIL_ITERS;
     }
+    private static final int ECOS_OPTIMAL = (int)0L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_OPTIMAL 0
      * }
      */
     public static int ECOS_OPTIMAL() {
-        return (int)0L;
+        return ECOS_OPTIMAL;
     }
+    private static final int ECOS_PINF = (int)1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_PINF 1
      * }
      */
     public static int ECOS_PINF() {
-        return (int)1L;
+        return ECOS_PINF;
     }
+    private static final int ECOS_DINF = (int)2L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_DINF 2
      * }
      */
     public static int ECOS_DINF() {
-        return (int)2L;
+        return ECOS_DINF;
     }
+    private static final int ECOS_INACC_OFFSET = (int)10L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_INACC_OFFSET 10
      * }
      */
     public static int ECOS_INACC_OFFSET() {
-        return (int)10L;
+        return ECOS_INACC_OFFSET;
     }
+    private static final int ECOS_MAXIT = (int)-1L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_MAXIT -1
      * }
      */
     public static int ECOS_MAXIT() {
-        return (int)-1L;
+        return ECOS_MAXIT;
     }
+    private static final int ECOS_NUMERICS = (int)-2L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_NUMERICS -2
      * }
      */
     public static int ECOS_NUMERICS() {
-        return (int)-2L;
+        return ECOS_NUMERICS;
     }
+    private static final int ECOS_OUTCONE = (int)-3L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_OUTCONE -3
      * }
      */
     public static int ECOS_OUTCONE() {
-        return (int)-3L;
+        return ECOS_OUTCONE;
     }
+    private static final int ECOS_SIGINT = (int)-4L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_SIGINT -4
      * }
      */
     public static int ECOS_SIGINT() {
-        return (int)-4L;
+        return ECOS_SIGINT;
     }
+    private static final int ECOS_FATAL = (int)-7L;
     /**
-     * {@snippet :
+     * {@snippet lang=c :
      * #define ECOS_FATAL -7
      * }
      */
     public static int ECOS_FATAL() {
-        return (int)-7L;
+        return ECOS_FATAL;
     }
 }
-
 
