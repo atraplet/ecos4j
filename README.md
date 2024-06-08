@@ -6,12 +6,12 @@
 [![GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue)](https://github.com/atraplet/ecos4j/blob/master/LICENSE)
 
 *This library requires JDK 22 as it depends on Java's
-new [Foreign Function and Memory API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).*
+new [Foreign Function and Memory (FFM) API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).*
 
 ecos4j (ECOS Solver for Java) is a Java library that provides an interface from the Java programming language to the
 native open source mathematical programming solver [ECOS](https://github.com/embotech/ecos). It invokes the solver
 through Java's
-new [Foreign Function and Memory API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).
+new [Foreign Function and Memory (FFM) API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).
 
 ## Usage
 
@@ -48,8 +48,9 @@ the native solver.
 
 ### Run Code
 
-Use `--enable-native-access=com.ustermetrics.ecos4j` or `--enable-native-access=ALL-UNNAMED` (if you are not using Java
-Platform Module System) to allow classpath based code to invoke the native code.
+Since ecos4j invokes some restricted methods of the FFM API, use `--enable-native-access=com.ustermetrics.ecos4j`
+or `--enable-native-access=ALL-UNNAMED` (if you are not using the Java Platform Module System) to avoid warnings from
+the Java runtime.
 
 ## Build
 
