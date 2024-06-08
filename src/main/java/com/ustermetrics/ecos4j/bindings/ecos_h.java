@@ -2,9 +2,6 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import org.scijava.nativelib.NativeLoader;
-
-import java.io.IOException;
 import java.lang.invoke.*;
 import java.lang.foreign.*;
 import java.nio.ByteOrder;
@@ -16,14 +13,6 @@ import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.PathElement.*;
 
 public class ecos_h {
-
-    static {
-        try {
-            NativeLoader.loadLibrary("ecos");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     ecos_h() {
         // Should not be called directly
@@ -66,8 +55,7 @@ public class ecos_h {
         };
     }
 
-    static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.libraryLookup(System.mapLibraryName("ecos"), LIBRARY_ARENA)
-            .or(SymbolLookup.loaderLookup())
+    static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.loaderLookup()
             .or(Linker.nativeLinker().defaultLookup());
 
     public static final ValueLayout.OfBoolean C_BOOL = ValueLayout.JAVA_BOOLEAN;
