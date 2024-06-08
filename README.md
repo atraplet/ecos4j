@@ -64,8 +64,7 @@ from native library headers.
 
 The bindings are generated in two steps: First, `./bindings/generate_includes.sh` generates the dumps of the included
 symbols in the `includes.txt` file. Replace absolute path with relative path in the comments.
-Second, `./bindings/generate_bindings.sh` generates the actual Java bindings. Replace `System.loadLibrary`
-with `NativeLoader.loadLibrary`.
+Second, `./bindings/generate_bindings.sh` generates the actual Java bindings. Finally, add `NativeLoader.loadLibrary`.
 
 ## Release
 
