@@ -22,7 +22,7 @@ INCLUDES="${ECOS4J}"/bindings/includes.txt
 rm -f "${TMP_INCLUDES}"
 rm -f "${INCLUDES}"
 ${JEXTRACT} \
-  -I "${ECOS}"/external/SuiteSparse_config \
+  --include-dir "${ECOS}"/external/SuiteSparse_config \
   --dump-includes "${TMP_INCLUDES}" \
   "${ECOS}"/include/ecos.h
 

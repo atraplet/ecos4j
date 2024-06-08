@@ -19,11 +19,11 @@ rm -rf "${ECOS4J}"/src/main/java/com/ustermetrics/ecos4j/bindings/
 
 # generate bindings
 $JEXTRACT \
-  -D DLONG \
-  -D LDL_LONG \
-  -DSuiteSparse_long="long long" \
-  -I "${ECOS}"/external/SuiteSparse_config \
-  -l ecos \
+  --define-macro DLONG \
+  --define-macro LDL_LONG \
+  --define-macro SuiteSparse_long="long long" \
+  --include-dir "${ECOS}"/external/SuiteSparse_config \
+  --library ecos \
   --target-package com.ustermetrics.ecos4j.bindings \
   --output "${ECOS4J}"/src/main/java \
   @"${ECOS4J}"/bindings/includes.txt "${ECOS}"/include/ecos.h
