@@ -1,11 +1,11 @@
 #### Extracted from: ecos/external/SuiteSparse_config/SuiteSparse_config.h
---include-struct SuiteSparse_config_struct    # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
+--include-typedef SuiteSparse_config          # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-function SuiteSparse_free           # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-function SuiteSparse_malloc         # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-function SuiteSparse_tic            # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-function SuiteSparse_time           # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-function SuiteSparse_toc            # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
---include-typedef SuiteSparse_config          # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
+--include-struct SuiteSparse_config_struct    # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-constant SUITESPARSE_DATE           # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-constant SUITESPARSE_MAIN_VERSION   # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-constant SUITESPARSE_SUBSUB_VERSION # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
@@ -18,9 +18,6 @@
 --include-constant UF_long_idd                # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 --include-constant UF_long_max                # header: ecos/external/SuiteSparse_config/SuiteSparse_config.h
 #### Extracted from: ecos/include/cone.h
---include-struct cone                        # header: ecos/include/cone.h
---include-struct lpcone                      # header: ecos/include/cone.h
---include-struct socone                      # header: ecos/include/cone.h
 --include-function bring2cone                # header: ecos/include/cone.h
 --include-function conicDivision             # header: ecos/include/cone.h
 --include-function conicProduct              # header: ecos/include/cone.h
@@ -32,13 +29,13 @@
 --include-function unscale                   # header: ecos/include/cone.h
 --include-function unstretch                 # header: ecos/include/cone.h
 --include-function updateScalings            # header: ecos/include/cone.h
+--include-struct cone                        # header: ecos/include/cone.h
+--include-struct lpcone                      # header: ecos/include/cone.h
+--include-struct socone                      # header: ecos/include/cone.h
 --include-constant CONEMODE                  # header: ecos/include/cone.h
 --include-constant INSIDE_CONE               # header: ecos/include/cone.h
 --include-constant OUTSIDE_CONE              # header: ecos/include/cone.h
 #### Extracted from: ecos/include/ecos.h
---include-struct pwork                    # header: ecos/include/ecos.h
---include-struct settings                 # header: ecos/include/ecos.h
---include-struct stats                    # header: ecos/include/ecos.h
 --include-function ECOS_cleanup           # header: ecos/include/ecos.h
 --include-function ECOS_setup             # header: ecos/include/ecos.h
 --include-function ECOS_solve             # header: ecos/include/ecos.h
@@ -47,6 +44,9 @@
 --include-function ecos_updateDataEntry_c # header: ecos/include/ecos.h
 --include-function ecos_updateDataEntry_h # header: ecos/include/ecos.h
 --include-function expConeLineSearch      # header: ecos/include/ecos.h
+--include-struct pwork                    # header: ecos/include/ecos.h
+--include-struct settings                 # header: ecos/include/ecos.h
+--include-struct stats                    # header: ecos/include/ecos.h
 --include-constant ABSTOL                 # header: ecos/include/ecos.h
 --include-constant ATOL_INACC             # header: ecos/include/ecos.h
 --include-constant BK_SCALE               # header: ecos/include/ecos.h
@@ -84,13 +84,13 @@
 --include-constant STEPMIN                # header: ecos/include/ecos.h
 --include-constant VERBOSE                # header: ecos/include/ecos.h
 #### Extracted from: ecos/include/expcone.h
---include-struct expcone             # header: ecos/include/expcone.h
 --include-function evalBarrierValue  # header: ecos/include/expcone.h
 --include-function evalExpDualFeas   # header: ecos/include/expcone.h
 --include-function evalExpGradient   # header: ecos/include/expcone.h
 --include-function evalExpHessian    # header: ecos/include/expcone.h
 --include-function evalExpPrimalFeas # header: ecos/include/expcone.h
 --include-function scaleToAddExpcone # header: ecos/include/expcone.h
+--include-struct expcone             # header: ecos/include/expcone.h
 #### Extracted from: ecos/include/glblopts.h
 --include-typedef idxint         # header: ecos/include/glblopts.h
 --include-typedef pfloat         # header: ecos/include/glblopts.h
@@ -100,15 +100,14 @@
 --include-constant PRINTLEVEL    # header: ecos/include/glblopts.h
 --include-constant PROFILING     # header: ecos/include/glblopts.h
 #### Extracted from: ecos/include/kkt.h
---include-struct kkt           # header: ecos/include/kkt.h
 --include-function kkt_factor  # header: ecos/include/kkt.h
 --include-function kkt_init    # header: ecos/include/kkt.h
 --include-function kkt_solve   # header: ecos/include/kkt.h
 --include-function kkt_update  # header: ecos/include/kkt.h
+--include-struct kkt           # header: ecos/include/kkt.h
 --include-constant KKT_OK      # header: ecos/include/kkt.h
 --include-constant KKT_PROBLEM # header: ecos/include/kkt.h
 #### Extracted from: ecos/include/spla.h
---include-struct spmat        # header: ecos/include/spla.h
 --include-function eddot      # header: ecos/include/spla.h
 --include-function norm2      # header: ecos/include/spla.h
 --include-function norminf    # header: ecos/include/spla.h
@@ -116,6 +115,7 @@
 --include-function sparseMtVm # header: ecos/include/spla.h
 --include-function vadd       # header: ecos/include/spla.h
 --include-function vsubscale  # header: ecos/include/spla.h
+--include-struct spmat        # header: ecos/include/spla.h
 #### Extracted from: ecos/include/wright_omega.h
 --include-function wrightOmega # header: ecos/include/wright_omega.h
 --include-function fflush            # header: /usr/include/stdio.h
