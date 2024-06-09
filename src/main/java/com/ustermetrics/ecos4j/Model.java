@@ -1,6 +1,5 @@
 package com.ustermetrics.ecos4j;
 
-import com.ustermetrics.ecos4j.bindings.ecos_h;
 import com.ustermetrics.ecos4j.bindings.pwork;
 import com.ustermetrics.ecos4j.bindings.settings;
 import com.ustermetrics.ecos4j.bindings.stats;
@@ -42,7 +41,7 @@ public class Model implements AutoCloseable {
      */
     @NonNull
     public static String version() {
-        return ecos_h.ECOS_ver().getUtf8String(0);
+        return ECOS_ver().getString(0);
     }
 
     /**
@@ -92,23 +91,23 @@ public class Model implements AutoCloseable {
         checkArgument(ajc.length == 0 || ajc.length == n + 1,
                 "ajc has zero length or must be equal to the length of c plus one");
 
-        val qSeg = arena.allocateArray(C_LONG_LONG, q);
-        val gprSeg = arena.allocateArray(C_DOUBLE, gpr);
-        val gjcSeg = arena.allocateArray(C_LONG_LONG, gjc);
-        val girSeg = arena.allocateArray(C_LONG_LONG, gir);
-        val aprSeg = apr.length > 0 ? arena.allocateArray(C_DOUBLE, apr) : NULL;
-        val ajcSeg = ajc.length > 0 ? arena.allocateArray(C_LONG_LONG, ajc) : NULL;
-        val airSeg = air.length > 0 ? arena.allocateArray(C_LONG_LONG, air) : NULL;
-        val cSeg = arena.allocateArray(C_DOUBLE, c);
-        val hSeg = arena.allocateArray(C_DOUBLE, h);
-        val bSeg = b.length > 0 ? arena.allocateArray(C_DOUBLE, b) : NULL;
+        val qSeg = arena.allocateFrom(C_LONG_LONG, q);
+        val gprSeg = arena.allocateFrom(C_DOUBLE, gpr);
+        val gjcSeg = arena.allocateFrom(C_LONG_LONG, gjc);
+        val girSeg = arena.allocateFrom(C_LONG_LONG, gir);
+        val aprSeg = apr.length > 0 ? arena.allocateFrom(C_DOUBLE, apr) : NULL;
+        val ajcSeg = ajc.length > 0 ? arena.allocateFrom(C_LONG_LONG, ajc) : NULL;
+        val airSeg = air.length > 0 ? arena.allocateFrom(C_LONG_LONG, air) : NULL;
+        val cSeg = arena.allocateFrom(C_DOUBLE, c);
+        val hSeg = arena.allocateFrom(C_DOUBLE, h);
+        val bSeg = b.length > 0 ? arena.allocateFrom(C_DOUBLE, b) : NULL;
 
         workSeg = ECOS_setup(n, m, p, l, nCones, qSeg, nExC, gprSeg, gjcSeg, girSeg, aprSeg, ajcSeg, airSeg, cSeg,
                 hSeg, bSeg).reinterpret(pwork.sizeof(), arena, null);
         verify(!NULL.equals(workSeg));
 
-        stgsSeg = pwork.stgs$get(workSeg).reinterpret(settings.sizeof(), arena, null);
-        infoSeg = pwork.info$get(workSeg).reinterpret(stats.sizeof(), arena, null);
+        stgsSeg = pwork.stgs(workSeg).reinterpret(settings.sizeof(), arena, null);
+        infoSeg = pwork.info(workSeg).reinterpret(stats.sizeof(), arena, null);
 
         stage = Stage.SETUP;
     }
@@ -140,15 +139,15 @@ public class Model implements AutoCloseable {
     public void setParameters(@NonNull Parameters parameters) {
         checkState(stage != Stage.NEW, "Model must not be in stage new");
 
-        settings.feastol$set(stgsSeg, parameters.getFeasTol());
-        settings.abstol$set(stgsSeg, parameters.getAbsTol());
-        settings.reltol$set(stgsSeg, parameters.getRelTol());
-        settings.feastol_inacc$set(stgsSeg, parameters.getFeasTolInacc());
-        settings.abstol_inacc$set(stgsSeg, parameters.getAbsTolInacc());
-        settings.reltol_inacc$set(stgsSeg, parameters.getRelTolInacc());
-        settings.maxit$set(stgsSeg, parameters.getMaxIt());
-        settings.nitref$set(stgsSeg, parameters.getNItRef());
-        settings.verbose$set(stgsSeg, parameters.isVerbose() ? 1 : 0);
+        settings.feastol(stgsSeg, parameters.getFeasTol());
+        settings.abstol(stgsSeg, parameters.getAbsTol());
+        settings.reltol(stgsSeg, parameters.getRelTol());
+        settings.feastol_inacc(stgsSeg, parameters.getFeasTolInacc());
+        settings.abstol_inacc(stgsSeg, parameters.getAbsTolInacc());
+        settings.reltol_inacc(stgsSeg, parameters.getRelTolInacc());
+        settings.maxit(stgsSeg, parameters.getMaxIt());
+        settings.nitref(stgsSeg, parameters.getNItRef());
+        settings.verbose(stgsSeg, parameters.isVerbose() ? 1 : 0);
     }
 
     /**
@@ -160,7 +159,7 @@ public class Model implements AutoCloseable {
         checkState(stage != Stage.NEW, "Model must not be in stage new");
 
         val status = ECOS_solve(workSeg);
-        if (settings.verbose$get(stgsSeg) == 1) {
+        if (settings.verbose(stgsSeg) == 1) {
             fflush(NULL);
         }
 
@@ -185,7 +184,7 @@ public class Model implements AutoCloseable {
      */
     public double pCost() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.pcost$get(infoSeg);
+        return stats.pcost(infoSeg);
     }
 
     /**
@@ -194,7 +193,7 @@ public class Model implements AutoCloseable {
      */
     public double dCost() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.dcost$get(infoSeg);
+        return stats.dcost(infoSeg);
     }
 
     /**
@@ -203,7 +202,7 @@ public class Model implements AutoCloseable {
      */
     public double pRes() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.pres$get(infoSeg);
+        return stats.pres(infoSeg);
     }
 
     /**
@@ -212,7 +211,7 @@ public class Model implements AutoCloseable {
      */
     public double dRes() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.dres$get(infoSeg);
+        return stats.dres(infoSeg);
     }
 
     /**
@@ -221,7 +220,7 @@ public class Model implements AutoCloseable {
      */
     public double pInf() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.pinf$get(infoSeg);
+        return stats.pinf(infoSeg);
     }
 
     /**
@@ -230,7 +229,7 @@ public class Model implements AutoCloseable {
      */
     public double dInf() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.dinf$get(infoSeg);
+        return stats.dinf(infoSeg);
     }
 
     /**
@@ -239,7 +238,7 @@ public class Model implements AutoCloseable {
      */
     public double pInfRes() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.pinfres$get(infoSeg);
+        return stats.pinfres(infoSeg);
     }
 
     /**
@@ -248,7 +247,7 @@ public class Model implements AutoCloseable {
      */
     public double dInfRes() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.dinfres$get(infoSeg);
+        return stats.dinfres(infoSeg);
     }
 
     /**
@@ -257,7 +256,7 @@ public class Model implements AutoCloseable {
      */
     public double gap() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.gap$get(infoSeg);
+        return stats.gap(infoSeg);
     }
 
     /**
@@ -266,7 +265,7 @@ public class Model implements AutoCloseable {
      */
     public double relGap() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.relgap$get(infoSeg);
+        return stats.relgap(infoSeg);
     }
 
     /**
@@ -275,7 +274,7 @@ public class Model implements AutoCloseable {
      */
     public long iter() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return stats.iter$get(infoSeg);
+        return stats.iter(infoSeg);
     }
 
     /**
@@ -284,7 +283,7 @@ public class Model implements AutoCloseable {
      */
     public double @NonNull [] x() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return pwork.x$get(workSeg).reinterpret(C_DOUBLE.byteSize() * n, arena, null).toArray(C_DOUBLE);
+        return pwork.x(workSeg).reinterpret(C_DOUBLE.byteSize() * n, arena, null).toArray(C_DOUBLE);
     }
 
     /**
@@ -293,7 +292,7 @@ public class Model implements AutoCloseable {
      */
     public double @NonNull [] y() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return pwork.y$get(workSeg).reinterpret(C_DOUBLE.byteSize() * p, arena, null).toArray(C_DOUBLE);
+        return pwork.y(workSeg).reinterpret(C_DOUBLE.byteSize() * p, arena, null).toArray(C_DOUBLE);
     }
 
     /**
@@ -302,7 +301,7 @@ public class Model implements AutoCloseable {
      */
     public double @NonNull [] z() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return pwork.z$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
+        return pwork.z(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
     /**
@@ -311,7 +310,7 @@ public class Model implements AutoCloseable {
      */
     public double @NonNull [] s() {
         checkStageIsOptimizedAndStatusIsNotFatal();
-        return pwork.s$get(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
+        return pwork.s(workSeg).reinterpret(C_DOUBLE.byteSize() * m, arena, null).toArray(C_DOUBLE);
     }
 
     @Override

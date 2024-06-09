@@ -14,13 +14,12 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="optimizer4j" target="20" />
+      <module name="ecos4j" target="22" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="ecos4j" options="--enable-preview" />
-      <module name="optimizer4j" options="--enable-preview" />
+      <module name="ecos4j" options="" />
     </option>
   </component>
 </project>

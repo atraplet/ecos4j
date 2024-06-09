@@ -5,12 +5,13 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.ustermetrics/ecos4j)](https://central.sonatype.com/artifact/com.ustermetrics/ecos4j)
 [![GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue)](https://github.com/atraplet/ecos4j/blob/master/LICENSE)
 
-*This library is currently an experimental library requiring JDK 21 and is work in progress. It depends
-on [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API which is in preview.*
+*This library requires JDK 22 as it depends on Java's
+new [Foreign Function and Memory (FFM) API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).*
 
 ecos4j (ECOS Solver for Java) is a Java library that provides an interface from the Java programming language to the
 native open source mathematical programming solver [ECOS](https://github.com/embotech/ecos). It invokes the solver
-through [Project Panama’s](https://openjdk.java.net/projects/panama/) Foreign Function and Memory API.
+through Java's
+new [Foreign Function and Memory (FFM) API](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html).
 
 ## Usage
 
@@ -47,9 +48,9 @@ the native solver.
 
 ### Run Code
 
-Since Panama is in preview in Java 21 `--enable-preview` is required. Additionally,
-use `--enable-native-access=com.ustermetrics.ecos4j` or `--enable-native-access=ALL-UNNAMED` (if you are not using Java
-Platform Module System) to allow classpath based code to invoke the native code.
+Since ecos4j invokes some restricted methods of the FFM API, use `--enable-native-access=com.ustermetrics.ecos4j`
+or `--enable-native-access=ALL-UNNAMED` (if you are not using the Java Platform Module System) to avoid warnings from
+the Java runtime.
 
 ## Build
 
@@ -63,8 +64,7 @@ from native library headers.
 
 The bindings are generated in two steps: First, `./bindings/generate_includes.sh` generates the dumps of the included
 symbols in the `includes.txt` file. Replace absolute path with relative path in the comments.
-Second, `./bindings/generate_bindings.sh` generates the actual Java bindings. Replace `System.loadLibrary`
-with `NativeLoader.loadLibrary`.
+Second, `./bindings/generate_bindings.sh` generates the actual Java bindings. Finally, add `NativeLoader.loadLibrary`.
 
 ## Release
 

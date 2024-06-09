@@ -36,7 +36,7 @@ public enum Status {
             }
         }
 
-        throw new IllegalArgumentException(STR."Unknown status \{status}");
+        throw new IllegalArgumentException("Unknown status " + status);
     }
 
 }

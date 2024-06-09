@@ -22,10 +22,10 @@ INCLUDES="${ECOS4J}"/bindings/includes.txt
 rm -f "${TMP_INCLUDES}"
 rm -f "${INCLUDES}"
 ${JEXTRACT} \
-  -I "${ECOS}"/external/SuiteSparse_config \
+  --include-dir "${ECOS}"/external/SuiteSparse_config \
   --dump-includes "${TMP_INCLUDES}" \
   "${ECOS}"/include/ecos.h
 
-# select ecos symbols plus fflush() for flushing C buffers
-grep "ecos\|fflush" "${TMP_INCLUDES}" >"${INCLUDES}"
+# select symbols
+grep "ecos\|fflush" "${TMP_INCLUDES}" | grep -v "SuiteSparse\|timer\|fflush_nolock\|fflush_unlocked" >"${INCLUDES}"
 rm -f "${TMP_INCLUDES}"
