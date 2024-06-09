@@ -118,5 +118,4 @@
 --include-struct spmat        # header: ecos/include/spla.h
 #### Extracted from: ecos/include/wright_omega.h
 --include-function wrightOmega # header: ecos/include/wright_omega.h
---include-function fflush            # header: /usr/include/stdio.h
---include-function fflush_unlocked   # header: /usr/include/stdio.h
+--include-function fflush            # header: stdio.h

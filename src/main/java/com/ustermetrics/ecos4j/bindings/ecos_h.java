@@ -2,9 +2,6 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import org.scijava.nativelib.NativeLoader;
-
-import java.io.IOException;
 import java.lang.invoke.*;
 import java.lang.foreign.*;
 import java.nio.ByteOrder;
@@ -19,14 +16,6 @@ public class ecos_h {
 
     ecos_h() {
         // Should not be called directly
-    }
-
-    static {
-        try {
-            NativeLoader.loadLibrary("ecos");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     static final Arena LIBRARY_ARENA = Arena.ofAuto();
@@ -164,64 +153,6 @@ public class ecos_h {
         try {
             if (TRACE_DOWNCALLS) {
                 traceDowncall("fflush", __stream);
-            }
-            return (int)mh$.invokeExact(__stream);
-        } catch (Throwable ex$) {
-           throw new AssertionError("should not reach here", ex$);
-        }
-    }
-
-    private static class fflush_unlocked {
-        public static final FunctionDescriptor DESC = FunctionDescriptor.of(
-            ecos_h.C_INT,
-            ecos_h.C_POINTER
-        );
-
-        public static final MemorySegment ADDR = ecos_h.findOrThrow("fflush_unlocked");
-
-        public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
-    }
-
-    /**
-     * Function descriptor for:
-     * {@snippet lang=c :
-     * extern int fflush_unlocked(FILE *__stream)
-     * }
-     */
-    public static FunctionDescriptor fflush_unlocked$descriptor() {
-        return fflush_unlocked.DESC;
-    }
-
-    /**
-     * Downcall method handle for:
-     * {@snippet lang=c :
-     * extern int fflush_unlocked(FILE *__stream)
-     * }
-     */
-    public static MethodHandle fflush_unlocked$handle() {
-        return fflush_unlocked.HANDLE;
-    }
-
-    /**
-     * Address for:
-     * {@snippet lang=c :
-     * extern int fflush_unlocked(FILE *__stream)
-     * }
-     */
-    public static MemorySegment fflush_unlocked$address() {
-        return fflush_unlocked.ADDR;
-    }
-
-    /**
-     * {@snippet lang=c :
-     * extern int fflush_unlocked(FILE *__stream)
-     * }
-     */
-    public static int fflush_unlocked(MemorySegment __stream) {
-        var mh$ = fflush_unlocked.HANDLE;
-        try {
-            if (TRACE_DOWNCALLS) {
-                traceDowncall("fflush_unlocked", __stream);
             }
             return (int)mh$.invokeExact(__stream);
         } catch (Throwable ex$) {
