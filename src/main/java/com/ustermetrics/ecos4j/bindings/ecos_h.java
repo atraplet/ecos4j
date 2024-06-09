@@ -2,9 +2,6 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
-import org.scijava.nativelib.NativeLoader;
-
-import java.io.IOException;
 import java.lang.invoke.*;
 import java.lang.foreign.*;
 import java.nio.ByteOrder;
@@ -19,14 +16,6 @@ public class ecos_h {
 
     ecos_h() {
         // Should not be called directly
-    }
-
-    static {
-        try {
-            NativeLoader.loadLibrary("ecos");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     static final Arena LIBRARY_ARENA = Arena.ofAuto();
@@ -2807,6 +2796,15 @@ public class ecos_h {
      */
     public static double ECOS_NAN() {
         return ECOS_NAN;
+    }
+    private static final long UF_long_max = 9223372036854775801L;
+    /**
+     * {@snippet lang=c :
+     * #define UF_long_max 9223372036854775801
+     * }
+     */
+    public static long UF_long_max() {
+        return UF_long_max;
     }
     /**
      * {@snippet lang=c :
