@@ -21,6 +21,9 @@ rm -rf "${ECOS4J}"/src/main/java/com/ustermetrics/ecos4j/bindings/
 $JEXTRACT \
   --define-macro DLONG \
   --define-macro LDL_LONG \
+  --define-macro SuiteSparse_long="long long" \
+  --define-macro SuiteSparse_long_max=9223372036854775801 \
+  --define-macro SuiteSparse_long_idd="lld" \
   --include-dir "${ECOS}"/external/SuiteSparse_config \
   --target-package com.ustermetrics.ecos4j.bindings \
   --output "${ECOS4J}"/src/main/java \
