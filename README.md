@@ -39,7 +39,7 @@ your `pom.xml`
     <groupId>com.ustermetrics</groupId>
     <artifactId>ecos4j-native</artifactId>
     <version>x.y.z</version>
-    <scope>runtime</runtime>
+    <scope>runtime</scope>
 </dependency>
 ```
 
