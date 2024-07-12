@@ -2,6 +2,9 @@
 
 package com.ustermetrics.ecos4j.bindings;
 
+import org.scijava.nativelib.NativeLoader;
+
+import java.io.IOException;
 import java.lang.invoke.*;
 import java.lang.foreign.*;
 import java.nio.ByteOrder;
@@ -16,6 +19,14 @@ public class ecos_h {
 
     ecos_h() {
         // Should not be called directly
+    }
+
+    static {
+        try {
+            NativeLoader.loadLibrary("ecos");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static final Arena LIBRARY_ARENA = Arena.ofAuto();
@@ -67,7 +78,6 @@ public class ecos_h {
     public static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
     public static final AddressLayout C_POINTER = ValueLayout.ADDRESS
             .withTargetLayout(MemoryLayout.sequenceLayout(java.lang.Long.MAX_VALUE, JAVA_BYTE));
-    public static final ValueLayout.OfLong C_LONG = ValueLayout.JAVA_LONG;
 
     private static class fflush {
         public static final FunctionDescriptor DESC = FunctionDescriptor.of(
