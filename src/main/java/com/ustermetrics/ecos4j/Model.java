@@ -9,6 +9,7 @@ import lombok.val;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -133,21 +134,32 @@ public class Model implements AutoCloseable {
 
     /**
      * Sets the <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
+     * <p>
+     * For {@code null} option values solver defaults are applied.
      *
      * @param parameters the parameter object for the solver options.
      */
     public void setParameters(@NonNull Parameters parameters) {
         checkState(stage != Stage.NEW, "Model must not be in stage new");
 
-        settings.feastol(stgsSeg, parameters.getFeasTol());
-        settings.abstol(stgsSeg, parameters.getAbsTol());
-        settings.reltol(stgsSeg, parameters.getRelTol());
-        settings.feastol_inacc(stgsSeg, parameters.getFeasTolInacc());
-        settings.abstol_inacc(stgsSeg, parameters.getAbsTolInacc());
-        settings.reltol_inacc(stgsSeg, parameters.getRelTolInacc());
-        settings.maxit(stgsSeg, parameters.getMaxIt());
-        settings.nitref(stgsSeg, parameters.getNItRef());
-        settings.verbose(stgsSeg, parameters.isVerbose() ? 1 : 0);
+        Optional.ofNullable(parameters.feasTol())
+                .ifPresent(feasTol -> settings.feastol(stgsSeg, feasTol));
+        Optional.ofNullable(parameters.absTol())
+                .ifPresent(absTol -> settings.abstol(stgsSeg, absTol));
+        Optional.ofNullable(parameters.relTol())
+                .ifPresent(relTol -> settings.reltol(stgsSeg, relTol));
+        Optional.ofNullable(parameters.feasTolInacc())
+                .ifPresent(feasTolInacc -> settings.feastol_inacc(stgsSeg, feasTolInacc));
+        Optional.ofNullable(parameters.absTolInacc())
+                .ifPresent(absTolInacc -> settings.abstol_inacc(stgsSeg, absTolInacc));
+        Optional.ofNullable(parameters.relTolInacc())
+                .ifPresent(relTolInacc -> settings.reltol_inacc(stgsSeg, relTolInacc));
+        Optional.ofNullable(parameters.maxIt())
+                .ifPresent(maxIt -> settings.maxit(stgsSeg, maxIt));
+        Optional.ofNullable(parameters.nItRef())
+                .ifPresent(nItRef -> settings.nitref(stgsSeg, nItRef));
+        Optional.ofNullable(parameters.verbose())
+                .ifPresent(verbose -> settings.verbose(stgsSeg, verbose ? 1 : 0));
     }
 
     /**

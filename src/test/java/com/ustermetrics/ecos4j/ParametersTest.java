@@ -16,21 +16,21 @@ class ParametersTest {
                 .feasTolInacc(1.)
                 .absTolInacc(1.)
                 .relTolInacc(1.)
-                .nItRef(1)
+                .nItRef(null)
                 .maxIt(1)
                 .verbose(true)
                 .build();
 
         val tol = 1e-8;
-        assertEquals(1., parameters.getFeasTol(), tol);
-        assertEquals(1., parameters.getAbsTol(), tol);
-        assertEquals(1., parameters.getRelTol(), tol);
-        assertEquals(1., parameters.getFeasTolInacc(), tol);
-        assertEquals(1., parameters.getAbsTolInacc(), tol);
-        assertEquals(1., parameters.getRelTolInacc(), tol);
-        assertEquals(1, parameters.getNItRef());
-        assertEquals(1, parameters.getMaxIt());
-        assertTrue(parameters.isVerbose());
+        assertEquals(1., parameters.feasTol(), tol);
+        assertEquals(1., parameters.absTol(), tol);
+        assertEquals(1., parameters.relTol(), tol);
+        assertEquals(1., parameters.feasTolInacc(), tol);
+        assertEquals(1., parameters.absTolInacc(), tol);
+        assertEquals(1., parameters.relTolInacc(), tol);
+        assertNull(parameters.nItRef());
+        assertEquals(1, parameters.maxIt());
+        assertTrue(parameters.verbose());
     }
 
     @Test
@@ -39,7 +39,7 @@ class ParametersTest {
                 .feasTol(-1.)
                 .build());
 
-        assertEquals("feasTol must be positive", exception.getMessage());
+        assertEquals("feasTol must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -48,7 +48,7 @@ class ParametersTest {
                 .absTol(-1.)
                 .build());
 
-        assertEquals("absTol must be positive", exception.getMessage());
+        assertEquals("absTol must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -57,7 +57,7 @@ class ParametersTest {
                 .relTol(-1.)
                 .build());
 
-        assertEquals("relTol must be positive", exception.getMessage());
+        assertEquals("relTol must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -66,7 +66,7 @@ class ParametersTest {
                 .feasTolInacc(-1.)
                 .build());
 
-        assertEquals("feasTolInacc must be positive", exception.getMessage());
+        assertEquals("feasTolInacc must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -75,7 +75,7 @@ class ParametersTest {
                 .absTolInacc(-1.)
                 .build());
 
-        assertEquals("absTolInacc must be positive", exception.getMessage());
+        assertEquals("absTolInacc must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -84,7 +84,7 @@ class ParametersTest {
                 .relTolInacc(-1.)
                 .build());
 
-        assertEquals("relTolInacc must be positive", exception.getMessage());
+        assertEquals("relTolInacc must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -93,7 +93,7 @@ class ParametersTest {
                 .nItRef(-1)
                 .build());
 
-        assertEquals("nItRef must be positive", exception.getMessage());
+        assertEquals("nItRef must be null or positive", exception.getMessage());
     }
 
     @Test
@@ -102,7 +102,7 @@ class ParametersTest {
                 .maxIt(-1)
                 .build());
 
-        assertEquals("maxIt must be positive", exception.getMessage());
+        assertEquals("maxIt must be null or positive", exception.getMessage());
     }
 
 }
