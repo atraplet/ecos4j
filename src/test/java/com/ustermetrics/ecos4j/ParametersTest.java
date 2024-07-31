@@ -16,7 +16,6 @@ class ParametersTest {
                 .feasTolInacc(1.)
                 .absTolInacc(1.)
                 .relTolInacc(1.)
-                .nItRef(null)
                 .maxIt(1)
                 .verbose(true)
                 .build();
