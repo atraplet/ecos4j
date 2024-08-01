@@ -143,7 +143,7 @@ class ModelTest {
         val exception = assertThrows(IllegalStateException.class, () -> {
             try (val model = new Model()) {
                 model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
-                model.setParameters(Parameters.builder().verbose(true).build());
+                model.setParameters(Parameters.builder().verbose(false).build());
                 model.optimize();
                 model.setup(l, q, nExC, gpr, gjc, gir, c, h);
             }
