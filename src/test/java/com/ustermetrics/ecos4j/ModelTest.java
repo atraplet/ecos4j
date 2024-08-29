@@ -78,6 +78,21 @@ class ModelTest {
     }
 
     @Test
+    void solvePortfolioOptimizationProblemWithVerboseTrueShouldPrintEcosOutputBeforeStatus() {
+        try (val model = new Model()) {
+            model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
+            val parameters = Parameters.builder()
+                    .verbose(true)
+                    .build();
+            model.setParameters(parameters);
+
+            val status = model.optimize();
+
+            System.out.println(status);
+        }
+    }
+
+    @Test
     void solveModifiedPortfolioOptimizationProblemWithMaxitLimitReturnsMaxitStatus() {
         try (val model = new Model()) {
             model.setup(l, q, nExC, gpr, gjc, gir, c, h);
