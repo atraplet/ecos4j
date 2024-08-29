@@ -110,6 +110,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <argLine>@{argLine} --enable-native-access=com.ustermetrics.ecos4j</argLine>
+                    <forkCount>0</forkCount>
                 </configuration>
             </plugin>
         </plugins>
