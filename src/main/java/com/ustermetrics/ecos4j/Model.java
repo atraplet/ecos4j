@@ -58,7 +58,7 @@ public class Model implements AutoCloseable {
      * exponential cone.
      *
      * @param l    the dimension of the positive orthant.
-     * @param q    the dimensions of each cone.
+     * @param q    the dimensions of the second-order cones.
      * @param nExC the number of exponential cones.
      * @param gpr  the sparse G matrix data (Column Compressed Storage CCS).
      * @param gjc  the sparse G matrix column index (CCS).
@@ -72,37 +72,60 @@ public class Model implements AutoCloseable {
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public void setup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
-                      long @NonNull [] gir, double @NonNull [] c, double @NonNull [] h, double @NonNull [] apr,
-                      long @NonNull [] ajc, long @NonNull [] air, double @NonNull [] b) {
+                      long @NonNull [] gir, double @NonNull [] c, double @NonNull [] h, double[] apr, long[] ajc,
+                      long[] air, double[] b) {
         checkState(stage == Stage.NEW, "Model must be in stage new");
-        checkArgument(apr.length == 0 && ajc.length == 0 && air.length == 0 && b.length == 0
-                        || apr.length > 0 && ajc.length > 0 && air.length > 0 && b.length > 0,
-                "apr, ajc, air, and b must be supplied (all non-empty) or omitted (all empty) together");
-        val nonNegErrMsg = "%s must be non-negative";
-        checkArgument(l >= 0, nonNegErrMsg, "l");
-        checkArgument(nExC >= 0, nonNegErrMsg, "nExC");
 
-        n = c.length;
-        m = h.length;
-        p = b.length;
+        checkArgument(l >= 0, "dimension of the positive orthant l must be non-negative");
         val nCones = q.length;
-
+        checkArgument(nCones == 0 || Arrays.stream(q).allMatch(d -> d > 0),
+                "second-order cone dimensions q must be empty or each dimension q[i] must be positive");
+        checkArgument(nExC >= 0, "number of exponential cones nExC must be non-negative");
+        val nnzG = gpr.length;
+        checkArgument(nnzG > 0, "number of non-zero elements in G (gpr.length) must be positive");
+        checkArgument(nnzG == gir.length,
+                "number of non-zero elements in G (gpr.length) must be equal to the number of elements in the row " +
+                        "index of G (gir.length)");
+        val nColsG = gjc.length - 1;
+        checkArgument(nColsG > 0, "number of columns of G (gjc.length - 1) must be positive");
+        n = c.length;
+        checkArgument(n > 0, "number of variables x (c.length) must be positive");
+        m = h.length;
+        checkArgument(m > 0, "dimension of all cones (h.length) must be positive");
         checkArgument(m == l + Arrays.stream(q).sum() + 3 * nExC,
-                "Length of h must be equal to the sum of l, q, and 3*nExC");
-        checkArgument(gjc.length == n + 1, "gjc must be equal to the length of c plus one");
-        checkArgument(ajc.length == 0 || ajc.length == n + 1,
-                "ajc has zero length or must be equal to the length of c plus one");
+                "dimension of all cones (h.length) must be equal to the sum of the positive orthant dimension l, the " +
+                        "second-order cone dimensions q[i], and three times the number of exponential cones 3 * nExC");
+        checkArgument(nColsG == n, "number of columns of G (gjc.length - 1) must be equal to the number of variables " +
+                "x (c.length)");
+
+        checkArgument(apr != null && ajc != null && air != null && b != null || apr == null && ajc == null && air == null && b == null,
+                "A (apr, ajc, air) and b must be supplied (all non-null) or omitted (all null) together");
+        if (apr != null) {
+            val nnzA = apr.length;
+            checkArgument(nnzA > 0, "number of non-zero elements in A (apr.length) must be positive");
+            checkArgument(nnzA == air.length,
+                    "number of non-zero elements in A (apr.length) must be equal to the number of elements in the row" +
+                            " index of A (air.length)");
+            val nColsA = ajc.length - 1;
+            checkArgument(nColsA > 0, "number of columns of A (ajc.length - 1) must be positive");
+            p = b.length;
+            checkArgument(p > 0, "number of equalities (b.length) must be positive");
+            checkArgument(nColsA == n, "number of columns of A (ajc.length - 1) must be equal to the number of " +
+                    "variables x (c.length)");
+        } else {
+            p = 0;
+        }
 
         val qSeg = arena.allocateFrom(C_LONG_LONG, q);
         val gprSeg = arena.allocateFrom(C_DOUBLE, gpr);
         val gjcSeg = arena.allocateFrom(C_LONG_LONG, gjc);
         val girSeg = arena.allocateFrom(C_LONG_LONG, gir);
-        val aprSeg = apr.length > 0 ? arena.allocateFrom(C_DOUBLE, apr) : NULL;
-        val ajcSeg = ajc.length > 0 ? arena.allocateFrom(C_LONG_LONG, ajc) : NULL;
-        val airSeg = air.length > 0 ? arena.allocateFrom(C_LONG_LONG, air) : NULL;
+        val aprSeg = apr != null ? arena.allocateFrom(C_DOUBLE, apr) : NULL;
+        val ajcSeg = ajc != null ? arena.allocateFrom(C_LONG_LONG, ajc) : NULL;
+        val airSeg = air != null ? arena.allocateFrom(C_LONG_LONG, air) : NULL;
         val cSeg = arena.allocateFrom(C_DOUBLE, c);
         val hSeg = arena.allocateFrom(C_DOUBLE, h);
-        val bSeg = b.length > 0 ? arena.allocateFrom(C_DOUBLE, b) : NULL;
+        val bSeg = b != null ? arena.allocateFrom(C_DOUBLE, b) : NULL;
 
         workSeg = ECOS_setup(n, m, p, l, nCones, qSeg, nExC, gprSeg, gjcSeg, girSeg, aprSeg, ajcSeg, airSeg, cSeg,
                 hSeg, bSeg).reinterpret(pwork.sizeof(), arena, null);
@@ -120,7 +143,7 @@ public class Model implements AutoCloseable {
      * without equality constraint, i.e. {@code apr}, {@code ajc}, {@code air}, and {@code b} are empty arrays.
      *
      * @param l    the dimension of the positive orthant.
-     * @param q    the dimensions of each cone.
+     * @param q    the dimensions of the second-order cones.
      * @param nExC the number of exponential cones.
      * @param gpr  the sparse G matrix data (Column Compressed Storage CCS).
      * @param gjc  the sparse G matrix column index (CCS).
@@ -130,7 +153,7 @@ public class Model implements AutoCloseable {
      */
     public void setup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
                       long @NonNull [] gir, double @NonNull [] c, double @NonNull [] h) {
-        setup(l, q, nExC, gpr, gjc, gir, c, h, new double[]{}, new long[]{}, new long[]{}, new double[]{});
+        setup(l, q, nExC, gpr, gjc, gir, c, h, null, null, null, null);
     }
 
     /**
