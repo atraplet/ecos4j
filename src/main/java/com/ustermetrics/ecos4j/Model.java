@@ -89,7 +89,7 @@ public class Model implements AutoCloseable {
 
         checkArgument(m == l + Arrays.stream(q).sum() + 3 * nExC,
                 "Length of h must be equal to the sum of l, q, and 3*nExC");
-        checkArgument(n == gjc.length - 1, "Length of c must be equal to the length of gjc minus one");
+        checkArgument(gjc.length == n + 1, "gjc must be equal to the length of c plus one");
         checkArgument(ajc.length == 0 || ajc.length == n + 1,
                 "ajc has zero length or must be equal to the length of c plus one");
 
