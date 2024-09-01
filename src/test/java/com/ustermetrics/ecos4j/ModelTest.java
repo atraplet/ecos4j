@@ -160,7 +160,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("l must be non-negative", exception.getMessage());
+        assertEquals("dimension of the positive orthant l must be non-negative", exception.getMessage());
     }
 
     @Test
@@ -171,7 +171,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("nExC must be non-negative", exception.getMessage());
+        assertEquals("number of exponential cones nExC must be non-negative", exception.getMessage());
     }
 
     @Test
