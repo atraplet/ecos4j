@@ -65,10 +65,10 @@ public class Model implements AutoCloseable {
      * @param gir  the sparse G matrix row index (CCS).
      * @param c    the cost function weights.
      * @param h    the right-hand-side of the cone constraints.
-     * @param apr  the sparse A matrix data (CCS).
-     * @param ajc  the sparse A matrix column index (CCS).
-     * @param air  the sparse A matrix row index (CCS).
-     * @param b    the right-hand-side of the equalities.
+     * @param apr  the (optional) sparse A matrix data (CCS).
+     * @param ajc  the (optional) sparse A matrix column index (CCS).
+     * @param air  the (optional) sparse A matrix row index (CCS).
+     * @param b    the (optional) right-hand-side of the equalities.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
     public void setup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
