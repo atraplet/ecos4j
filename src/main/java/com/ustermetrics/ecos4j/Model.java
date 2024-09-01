@@ -76,7 +76,8 @@ public class Model implements AutoCloseable {
                       long @NonNull [] ajc, long @NonNull [] air, double @NonNull [] b) {
         checkState(stage == Stage.NEW, "Model must be in stage new");
         checkArgument(apr.length == 0 && ajc.length == 0 && air.length == 0 && b.length == 0
-                || apr.length > 0 && ajc.length > 0 && air.length > 0 && b.length > 0);
+                        || apr.length > 0 && ajc.length > 0 && air.length > 0 && b.length > 0,
+                "apr, ajc, air, and b must be supplied (all non-empty) or omitted (all empty) together");
         val nonNegErrMsg = "%s must be non-negative";
         checkArgument(l >= 0, nonNegErrMsg, "l");
         checkArgument(nExC >= 0, nonNegErrMsg, "nExC");
