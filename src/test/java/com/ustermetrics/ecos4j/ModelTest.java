@@ -33,7 +33,7 @@ class ModelTest {
                 -1.};
         gjc = new long[]{0, 2, 5, 9, 14, 16};
         gir = new long[]{0, 6, 1, 6, 7, 2, 6, 7, 8, 3, 6, 7, 8, 9, 4, 5};
-        apr = new double[]{1., 1., 1., 1., 0.};
+        apr = new double[]{1., 1., 1., 1.};
         ajc = new long[]{0, 1, 2, 3, 4, 4};
         air = new long[]{0, 0, 0, 0};
         c = new double[]{-0.05, -0.06, -0.08, -0.06, 0.};
