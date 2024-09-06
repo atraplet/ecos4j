@@ -64,12 +64,14 @@ public class Model implements AutoCloseable {
      * @param nExC the number of exponential cones.
      * @param gpr  the sparse G matrix data (Column Compressed Storage CCS).
      * @param gjc  the sparse G matrix column index (CCS).
-     * @param gir  the sparse G matrix row index (CCS).
+     * @param gir  the sparse G matrix row index (CCS). Entries within each column need to appear in order of
+     *             increasing row index.
      * @param c    the cost function weights.
      * @param h    the right-hand-side of the cone constraints.
      * @param apr  the (optional) sparse A matrix data (CCS).
      * @param ajc  the (optional) sparse A matrix column index (CCS).
-     * @param air  the (optional) sparse A matrix row index (CCS).
+     * @param air  the (optional) sparse A matrix row index (CCS). Entries within each column need to appear in order
+     *            of increasing row index.
      * @param b    the (optional) right-hand-side of the equalities.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
@@ -139,7 +141,8 @@ public class Model implements AutoCloseable {
      * @param nExC the number of exponential cones.
      * @param gpr  the sparse G matrix data (Column Compressed Storage CCS).
      * @param gjc  the sparse G matrix column index (CCS).
-     * @param gir  the sparse G matrix row index (CCS).
+     * @param gir  the sparse G matrix row index (CCS). Entries within each column need to appear in order of
+     *             increasing row index.
      * @param c    the cost function weights.
      * @param h    the right-hand-side of the cone constraints.
      */
@@ -163,12 +166,14 @@ public class Model implements AutoCloseable {
      * @param nExC the number of exponential cones.
      * @param gpr  the sparse G matrix data (Column Compressed Storage CCS).
      * @param gjc  the sparse G matrix column index (CCS).
-     * @param gir  the sparse G matrix row index (CCS).
+     * @param gir  the sparse G matrix row index (CCS). Entries within each column need to appear in order of
+     *             increasing row index.
      * @param c    the cost function weights.
      * @param h    the right-hand-side of the cone constraints.
      * @param apr  the (optional) sparse A matrix data (CCS).
      * @param ajc  the (optional) sparse A matrix column index (CCS).
-     * @param air  the (optional) sparse A matrix row index (CCS).
+     * @param air  the (optional) sparse A matrix row index (CCS). Entries within each column need to appear in order
+     *            of increasing row index.
      * @param b    the (optional) right-hand-side of the equalities.
      */
     public void unsafeSetup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
