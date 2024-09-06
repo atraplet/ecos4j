@@ -102,7 +102,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("Model must not be in stage new", exception.getMessage());
+        assertEquals("model must not be in stage new", exception.getMessage());
     }
 
     @Test
@@ -113,7 +113,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("Model must be in stage optimized", exception.getMessage());
+        assertEquals("model must be in stage optimized", exception.getMessage());
     }
 
     @Test
@@ -124,7 +124,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("Model must not be in stage new", exception.getMessage());
+        assertEquals("model must not be in stage new", exception.getMessage());
     }
 
     @Test
@@ -135,7 +135,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("Model must not be in stage new", exception.getMessage());
+        assertEquals("model must not be in stage new", exception.getMessage());
     }
 
     @Test
@@ -149,7 +149,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("Model must be in stage new", exception.getMessage());
+        assertEquals("model must be in stage new", exception.getMessage());
     }
 
     @Test
@@ -160,7 +160,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("dimension of the positive orthant l must be non-negative", exception.getMessage());
+        assertEquals("dimension of the positive orthant must be non-negative", exception.getMessage());
     }
 
     @Test
@@ -171,7 +171,7 @@ class ModelTest {
             }
         });
 
-        assertEquals("number of exponential cones nExC must be non-negative", exception.getMessage());
+        assertEquals("number of exponential cones must be non-negative", exception.getMessage());
     }
 
     @Test
