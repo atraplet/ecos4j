@@ -121,7 +121,7 @@ public class Model implements AutoCloseable {
                         "equal to the number of non-zero entries", mName);
         checkArgument(IntStream.range(0, mjc.length - 1).allMatch(i ->
                         0 <= mjc[i] && mjc[i] <= nnz && mjc[i] <= mjc[i + 1]
-                                && IntStream.range(toIntExact(mjc[i]), toIntExact(mjc[i + 1])).allMatch(j -> mir[j] < mir[j + 1])),
+                                && IntStream.range(toIntExact(mjc[i]), toIntExact(mjc[i + 1]) - 1).allMatch(j -> mir[j] < mir[j + 1])),
                 "matrix %s: entries of the column index must be greater equal zero, less equal than the number of " +
                         "non-zero entries, and must be ordered, entries of the row index within each column must be " +
                         "strictly ordered", mName);
