@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static java.lang.Math.log;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelTest {
@@ -242,7 +243,7 @@ class ModelTest {
 
             assertEquals(Status.OPTIMAL, status);
             val tol = 1e-7;
-            assertArrayEquals(new double[]{-Math.log(a) / a, 1. / a}, model.x(), tol);
+            assertArrayEquals(new double[]{-log(a) / a, 1. / a}, model.x(), tol);
         }
     }
 
