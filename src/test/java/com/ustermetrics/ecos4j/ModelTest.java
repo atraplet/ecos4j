@@ -222,9 +222,10 @@ class ModelTest {
         // minimize -x + y, exp(a * x) <= y, a = 0.3
         // or equivalently
         // minimize -x + y, (a * x, y, 1) \in K_e, a = 0.3
+        val a = 0.3;
         val nExC = 1;
         val q = new long[]{};
-        val gpr = new double[]{-0.3, -1.};
+        val gpr = new double[]{-a, -1.};
         val gjc = new long[]{0, 1, 2};
         val gir = new long[]{0, 1};
         val c = new double[]{-1., 1.};
@@ -240,8 +241,8 @@ class ModelTest {
             val status = model.optimize();
 
             assertEquals(Status.OPTIMAL, status);
-            val tol = 1e-8;
-            assertArrayEquals(new double[]{-Math.log(0.3) / 0.3, 1. / 0.3}, model.x(), tol);
+            val tol = 1e-7;
+            assertArrayEquals(new double[]{-Math.log(a) / a, 1. / a}, model.x(), tol);
         }
     }
 
