@@ -235,6 +235,7 @@ class ModelTest {
         try (val model = new Model()) {
             model.setup(0, q, nExC, gpr, gjc, gir, c, h);
             val parameters = Parameters.builder()
+                    .feasTol(1e-12)
                     .verbose(false)
                     .build();
             model.setParameters(parameters);
@@ -242,7 +243,7 @@ class ModelTest {
             val status = model.optimize();
 
             assertEquals(Status.OPTIMAL, status);
-            val tol = 1e-7;
+            val tol = 1e-11;
             assertArrayEquals(new double[]{-log(a) / a, 1. / a}, model.x(), tol);
         }
     }
