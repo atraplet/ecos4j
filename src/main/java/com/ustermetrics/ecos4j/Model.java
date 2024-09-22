@@ -56,8 +56,8 @@ public class Model implements AutoCloseable {
      *                 s in K
      * </pre>
      * where x are the primal variables, s are slack variables, c, G, h, A, and b are the model data, and K is the
-     * convex cone. The cone K is the Cartesian product of the positive orthant cone, the second order cone, and the
-     * exponential cone.
+     * convex cone. The cone K is the Cartesian product of the positive orthant cone, second-order, and exponential
+     * cones.
      *
      * @param l    the dimension of the positive orthant.
      * @param q    the dimensions of the second-order cones.
@@ -71,7 +71,7 @@ public class Model implements AutoCloseable {
      * @param apr  the (optional) sparse A matrix data (CCS).
      * @param ajc  the (optional) sparse A matrix column index (CCS).
      * @param air  the (optional) sparse A matrix row index (CCS). Entries within each column need to appear in order
-     *            of increasing row index.
+     *             of increasing row index.
      * @param b    the (optional) right-hand-side of the equalities.
      * @see <a href="https://github.com/embotech/ecos">ECOS</a>
      */
@@ -173,7 +173,7 @@ public class Model implements AutoCloseable {
      * @param apr  the (optional) sparse A matrix data (CCS).
      * @param ajc  the (optional) sparse A matrix column index (CCS).
      * @param air  the (optional) sparse A matrix row index (CCS). Entries within each column need to appear in order
-     *            of increasing row index.
+     *             of increasing row index.
      * @param b    the (optional) right-hand-side of the equalities.
      */
     public void unsafeSetup(long l, long @NonNull [] q, long nExC, double @NonNull [] gpr, long @NonNull [] gjc,
