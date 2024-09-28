@@ -134,7 +134,7 @@ public class Model implements AutoCloseable {
      * <p>
      * Same as
      * {@link Model#setup(long l, long[] q, long nExC, double[] gpr, long[] gjc, long[] gir, double[] c, double[] h, double[] apr, long[] ajc, long[] air, double[] b)}
-     * without equality constraint, i.e. {@code apr}, {@code ajc}, {@code air}, and {@code b} are empty arrays.
+     * without equality constraint, i.e. {@code apr}, {@code ajc}, {@code air}, and {@code b} are {@code null}.
      *
      * @param l    the dimension of the positive orthant.
      * @param q    the dimensions of the second-order cones.
