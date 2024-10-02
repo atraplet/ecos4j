@@ -16,14 +16,10 @@ jobs:
     needs: [ build ]
     steps:
       - uses: actions/checkout@v4
-      - name: Get JDK version from Maven project
-        run: |
-          JDK_VERSION=$(mvn help:evaluate -Dexpression=maven.compiler.source -q -DforceStdout)
-          echo "JDK_VERSION=$JDK_VERSION" >> $GITHUB_ENV
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ env.JDK_VERSION }}
+          java-version: '23'
           distribution: 'temurin'
           server-id: ossrh
           server-username: MAVEN_USERNAME
