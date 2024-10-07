@@ -9,7 +9,7 @@
     <version>2-SNAPSHOT</version>
 
     <properties>
-        <java.version>22</java.version>
+        <java.version>23</java.version>
         <lombok.version>1.18.34</lombok.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
