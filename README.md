@@ -5,7 +5,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.ustermetrics/ecos4j)](https://central.sonatype.com/artifact/com.ustermetrics/ecos4j)
 [![GPLv3 licensed](https://img.shields.io/badge/license-GPLv3-blue)](https://github.com/atraplet/ecos4j/blob/master/LICENSE)
 
-*This library requires JDK 22 or higher as it depends on
+*This library requires JDK 23 as it depends on
 Java's [Foreign Function and Memory (FFM) API](https://docs.oracle.com/en/java/javase/23/core/foreign-function-and-memory-api.html).*
 
 ecos4j (ECOS Solver for Java) is a Java library that provides an interface from the Java programming language to the
