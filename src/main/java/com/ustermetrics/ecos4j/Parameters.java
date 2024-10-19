@@ -8,7 +8,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * A parameter object for <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
  * <p>
- * For {@code null} option values {@link Model#setParameters(Parameters parameters)} applies solver defaults.
+ * If {@link Model#setParameters(Parameters parameters)} is not called, then solver defaults are applied.
  *
  * @param feasTol      the primal/dual infeasibility tolerance.
  * @param absTol       the absolute tolerance on the duality gap.

@@ -49,11 +49,11 @@ class ModelTest {
         @Test
         void solveProblemReturnsExpectedSolution() {
             try (val model = new Model()) {
-                model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
                 val parameters = Parameters.builder()
                         .verbose(false)
                         .build();
                 model.setParameters(parameters);
+                model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
 
                 val status = model.optimize();
 
@@ -85,11 +85,11 @@ class ModelTest {
         @Test
         void solveProblemWithVerboseParameterTrueReturnsOptimal() {
             try (val model = new Model()) {
-                model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
                 val parameters = Parameters.builder()
                         .verbose(true)
                         .build();
                 model.setParameters(parameters);
+                model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
 
                 val status = model.optimize();
 
@@ -100,12 +100,12 @@ class ModelTest {
         @Test
         void solveModifiedProblemWithMaxitLimitReturnsMaxitStatus() {
             try (val model = new Model()) {
-                model.setup(l, q, nExC, gpr, gjc, gir, c, h);
                 val parameters = Parameters.builder()
                         .maxIt(5)
                         .verbose(false)
                         .build();
                 model.setParameters(parameters);
+                model.setup(l, q, nExC, gpr, gjc, gir, c, h);
 
                 val status = model.optimize();
                 model.cleanup();
@@ -122,6 +122,18 @@ class ModelTest {
                     model.setParameters(Parameters.builder().verbose(false).build());
                     model.optimize();
                     model.setup(l, q, nExC, gpr, gjc, gir, c, h);
+                }
+            });
+
+            assertEquals("model must be in stage new", exception.getMessage());
+        }
+
+        @Test
+        void setParametersAfterSetupThrowsException() {
+            val exception = assertThrows(IllegalStateException.class, () -> {
+                try (val model = new Model()) {
+                    model.setup(l, q, nExC, gpr, gjc, gir, c, h, apr, ajc, air, b);
+                    model.setParameters(Parameters.builder().build());
                 }
             });
 
@@ -201,11 +213,11 @@ class ModelTest {
         val h = new double[]{-2., 1.};
 
         try (val model = new Model()) {
-            model.setup(l, q, 0, gpr, gjc, gir, c, h);
             val parameters = Parameters.builder()
                     .verbose(false)
                     .build();
             model.setParameters(parameters);
+            model.setup(l, q, 0, gpr, gjc, gir, c, h);
 
             val status = model.optimize();
 
@@ -233,12 +245,12 @@ class ModelTest {
         val h = new double[]{0., 0., 1.};
 
         try (val model = new Model()) {
-            model.setup(0, q, nExC, gpr, gjc, gir, c, h);
             val parameters = Parameters.builder()
                     .feasTol(1e-12)
                     .verbose(false)
                     .build();
             model.setParameters(parameters);
+            model.setup(0, q, nExC, gpr, gjc, gir, c, h);
 
             val status = model.optimize();
 
@@ -275,17 +287,6 @@ class ModelTest {
         val exception = assertThrows(IllegalStateException.class, () -> {
             try (val model = new Model()) {
                 model.cleanup();
-            }
-        });
-
-        assertEquals("model must not be in stage new", exception.getMessage());
-    }
-
-    @Test
-    void setParametersWithoutSetupThrowsException() {
-        val exception = assertThrows(IllegalStateException.class, () -> {
-            try (val model = new Model()) {
-                model.setParameters(Parameters.builder().build());
             }
         });
 

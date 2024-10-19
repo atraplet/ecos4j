@@ -31,6 +31,7 @@ public class Model implements AutoCloseable {
 
     private final Arena arena = Arena.ofConfined();
     private Stage stage = Stage.NEW;
+    private Parameters parameters;
     private long n;
     private long m;
     private long p;
@@ -45,6 +46,19 @@ public class Model implements AutoCloseable {
     @NonNull
     public static String version() {
         return ECOS_ver().getString(0);
+    }
+
+    /**
+     * Sets the <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
+     * <p>
+     * If not called, then solver defaults are applied.
+     *
+     * @param parameters the parameter object for the solver options.
+     */
+    public void setParameters(@NonNull Parameters parameters) {
+        checkState(stage == Stage.NEW, "model must be in stage new");
+
+        this.parameters = parameters;
     }
 
     /**
@@ -204,37 +218,32 @@ public class Model implements AutoCloseable {
         stgsSeg = pwork.stgs(workSeg).reinterpret(settings.sizeof(), arena, null);
         infoSeg = pwork.info(workSeg).reinterpret(stats.sizeof(), arena, null);
 
+        setParameters();
+
         stage = Stage.SETUP;
     }
 
-    /**
-     * Sets the <a href="https://github.com/embotech/ecos">ECOS</a> solver options.
-     * <p>
-     * For {@code null} option values solver defaults are applied.
-     *
-     * @param parameters the parameter object for the solver options.
-     */
-    public void setParameters(@NonNull Parameters parameters) {
-        checkState(stage != Stage.NEW, "model must not be in stage new");
-
-        Optional.ofNullable(parameters.feasTol())
-                .ifPresent(feasTol -> settings.feastol(stgsSeg, feasTol));
-        Optional.ofNullable(parameters.absTol())
-                .ifPresent(absTol -> settings.abstol(stgsSeg, absTol));
-        Optional.ofNullable(parameters.relTol())
-                .ifPresent(relTol -> settings.reltol(stgsSeg, relTol));
-        Optional.ofNullable(parameters.feasTolInacc())
-                .ifPresent(feasTolInacc -> settings.feastol_inacc(stgsSeg, feasTolInacc));
-        Optional.ofNullable(parameters.absTolInacc())
-                .ifPresent(absTolInacc -> settings.abstol_inacc(stgsSeg, absTolInacc));
-        Optional.ofNullable(parameters.relTolInacc())
-                .ifPresent(relTolInacc -> settings.reltol_inacc(stgsSeg, relTolInacc));
-        Optional.ofNullable(parameters.maxIt())
-                .ifPresent(maxIt -> settings.maxit(stgsSeg, maxIt));
-        Optional.ofNullable(parameters.nItRef())
-                .ifPresent(nItRef -> settings.nitref(stgsSeg, nItRef));
-        Optional.ofNullable(parameters.verbose())
-                .ifPresent(verbose -> settings.verbose(stgsSeg, verbose ? 1 : 0));
+    private void setParameters() {
+        if (parameters != null) {
+            Optional.ofNullable(parameters.feasTol())
+                    .ifPresent(p -> settings.feastol(stgsSeg, p));
+            Optional.ofNullable(parameters.absTol())
+                    .ifPresent(p -> settings.abstol(stgsSeg, p));
+            Optional.ofNullable(parameters.relTol())
+                    .ifPresent(p -> settings.reltol(stgsSeg, p));
+            Optional.ofNullable(parameters.feasTolInacc())
+                    .ifPresent(p -> settings.feastol_inacc(stgsSeg, p));
+            Optional.ofNullable(parameters.absTolInacc())
+                    .ifPresent(p -> settings.abstol_inacc(stgsSeg, p));
+            Optional.ofNullable(parameters.relTolInacc())
+                    .ifPresent(p -> settings.reltol_inacc(stgsSeg, p));
+            Optional.ofNullable(parameters.maxIt())
+                    .ifPresent(p -> settings.maxit(stgsSeg, p));
+            Optional.ofNullable(parameters.nItRef())
+                    .ifPresent(p -> settings.nitref(stgsSeg, p));
+            Optional.ofNullable(parameters.verbose())
+                    .ifPresent(p -> settings.verbose(stgsSeg, p ? 1 : 0));
+        }
     }
 
     /**
