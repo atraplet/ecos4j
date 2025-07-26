@@ -1,3 +1,11 @@
+# Note
+
+The repository of the underlying solver ECOS is inactive. Moreover, ECOS has known issues with performance and numerical stability. 
+Hence, we decided to stop the development of ecos4j and to archive it.
+
+If you are interested in solving convex optimization problems with Java, then you may use our project [clarabel4j](https://github.com/atraplet/clarabel4j).
+The underlying native solver Clarabel improves the algorithm and implementation of ECOS and is under active development.
+
 # ECOS Solver for Java
 
 [![Build](https://github.com/atraplet/ecos4j/actions/workflows/build.yml/badge.svg)](https://github.com/atraplet/ecos4j/actions/workflows/build.yml)
